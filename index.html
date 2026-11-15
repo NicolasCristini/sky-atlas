@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sky Atlas">
+<title>Sky Atlas — why the sky changes with place</title>
+<meta name="theme-color" content="#04060c">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Pick any place on a 3D globe and see its sky. Travel between places and watch the stars swing to understand why latitude changes which stars you see.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2305070d'/%3E%3Cpath d='M16 5l2.4 7.6H26l-6.2 4.5 2.4 7.6-6.2-4.7-6.2 4.7 2.4-7.6L6 12.6h7.6z' fill='%23f2c14e'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="mode-globe">
+<canvas id="gl" role="img" aria-label="Interactive 3D globe and sky view. Drag to look around, scroll to zoom."></canvas>
+<div id="labels" aria-hidden="true"></div>
+<div id="reticle" hidden><svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="17" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M24 2v9M24 37v9M2 24h9M37 24h9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+
+<div id="left-col">
+  <header id="place" class="panel">
+    <div class="place-top">
+      <div class="place-id">
+        <div class="eyebrow">Observer</div>
+        <h1 id="place-name">Rome</h1>
+        <div class="coords" id="place-coords">41.90°N  12.50°E</div>
+      </div>
+      <div class="seg" id="mode-seg" role="group" aria-label="View mode">
+        <button data-mode="globe" class="on" title="Globe view (G)">Globe</button>
+        <button data-mode="sky" title="Sky view (S)">Sky</button>
+      </div>
+    </div>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="search" type="text" placeholder="Search any town or place" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" aria-label="Search any town, city or coordinates" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest">
+      <span id="search-spin" class="spin" hidden aria-hidden="true"></span><span id="search-live" class="sr-only" role="status" aria-live="polite"></span>
+      <button id="geo" class="icon-btn" title="My location" aria-label="My location"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+      <ul id="suggest" role="listbox" hidden></ul>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+</div>
+
+<div id="right-col">
+  <div id="toolbar">
+    <div class="menu-wrap">
+      <button id="sky-btn" class="tool-btn" aria-haspopup="true" aria-expanded="false" aria-controls="sky-menu" aria-label="Sky: light pollution and star brightness" title="How dark is your sky? Sky quality and star brightness"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.7 5.1 5.3.1-4.3 3.2 1.6 5.1-4.3-3.1-4.3 3.1 1.6-5.1L5 8.7l5.3-.1z"/><path d="M4 21h16" opacity=".55"/></svg><span>Sky</span></button>
+      <div id="sky-menu" class="panel menu sky-menu" hidden>
+        <div class="sm-head"><span class="eyebrow">Sky quality</span><span class="sm-name" id="sq-name">Dark site</span></div>
+        <input id="sq" type="range" min="0" max="4" step="0.01" value="3" aria-label="Sky quality, from big city to enhanced">
+        <div class="sq-ticks" aria-hidden="true"><span>City</span><span>Suburb</span><span>Country</span><span>Dark</span><span>Enhanced</span></div>
+        <div class="sm-note" id="sq-count" aria-live="polite"></div>
+        <div class="sm-head sm-gap"><span class="eyebrow">Star brightness</span><span class="sm-name num" id="sx-val">1.0×</span></div>
+        <input id="sx" type="range" min="0" max="1" step="0.005" value="0.387" aria-label="Star brightness, 0.5 to 3 times">
+        <div class="ticks" aria-hidden="true"><span>0.5×</span><span>3×</span></div>
+        <div class="sm-foot"><span class="sm-note">Faint stars fade out near the limit, and city glow washes out the low ones.</span><button id="sky-reset" class="btn sm-btn" type="button">Reset</button></div>
+      </div>
+    </div>
+    <div class="menu-wrap">
+      <button id="layers-btn" class="tool-btn" aria-haspopup="true" aria-expanded="false" aria-label="Layers" title="Choose what to draw: lines, names, grid, poles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5" opacity=".55"/></svg><span>Layers</span></button>
+      <div id="layers-menu" class="panel menu" hidden></div>
+    </div>
+    <button id="explain-btn" class="tool-btn on" aria-expanded="true" aria-label="Why the sky changed" title="Why the sky changed: show or hide the explainer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg><span>Why the sky changed</span></button>
+  </div>
+  <aside id="card" class="panel" hidden aria-live="polite"></aside>
+  <aside id="explainer" class="panel"></aside>
+</div>
+
+<div id="travel-hud" aria-label="Travel progress">
+  <div class="th panel">
+    <div class="th-top"><span class="th-route" id="th-route" aria-hidden="true"></span><span class="th-km num" id="th-km" aria-hidden="true"></span></div>
+    <div class="th-row" aria-hidden="true"><span class="k">Latitude</span><b class="num" id="th-lat">--</b></div>
+    <div class="th-pole" id="th-pole" aria-hidden="true"></div>
+    <div class="th-bar" aria-hidden="true"><i id="th-fill"></i></div>
+    <span class="sr-only" id="th-live" role="status" aria-live="polite"></span>
+  </div>
+</div>
+
+<div id="caption" class="panel" hidden><span id="caption-text"></span><button id="caption-stop" class="icon-btn" aria-label="Stop journey" title="Stop journey"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+
+<div id="mini" hidden>
+  <button id="mini-expand" class="mini-btn" title="Expand to globe (G)" aria-label="Expand to globe"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
+</div>
+
+<button id="look-up" class="cta"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.6H20l-4.9 3.6 1.9 5.8-5-3.6-5 3.6 1.9-5.8L4 8.6h6.2z"/></svg><span>Look up from here</span></button>
+
+<footer id="timebar" class="panel" data-tm="day">
+  <div class="tb-row">
+    <button id="play" class="icon-btn lg" aria-label="Play / pause (Space)" title="Play / pause (Space)"></button>
+    <div class="speeds seg" id="speeds" role="group" aria-label="Time speed">
+      <button data-speed="1">1×</button><button data-speed="60">1 min/s</button><button data-speed="600">10 min/s</button><button data-speed="3600">1 h/s</button>
+    </div>
+    <div class="tb-slider">
+      <input id="scrub" type="range" min="-720" max="720" step="1" value="0" aria-label="Time offset, plus or minus 12 hours">
+      <div class="ticks" id="scrub-ticks"><span>−12 h</span><span>0</span><span>+12 h</span></div>
+    </div>
+    <button id="now" class="btn" title="Jump to the current time" aria-label="Set time to now">Now</button>
+  </div>
+  <div class="tb-row tb-meta">
+    <div class="seg tb-mode" id="tmode" role="group" aria-label="Time scale"><button data-tm="day" class="on" title="Scrub the hours of the day">Day</button><button data-tm="year" title="Scrub the seasons of the year">Year</button><button data-tm="ages" title="Scrub centuries and millennia">Ages</button></div>
+    <div class="readout rd-day"><span class="k">UTC</span><input id="utc-input" type="datetime-local" aria-label="Date and time (UTC)" step="60"></div>
+    <div class="readout rd-year"><span class="k">Date</span><span id="date-out" class="v">--</span></div>
+    <div class="readout rd-ages" aria-live="polite"><span id="year-big" class="yr">AD 2026</span><span id="year-sub" class="yr-sub">today</span></div>
+    <div class="readout"><span class="k">Local solar</span><span id="solar" class="v">--:--</span></div>
+    <label class="switch" title="While travelling, shift the clock by the longitude change so local solar time stays the same"><input id="keep-local" type="checkbox" checked><span class="track"></span><span class="sw-t">Keep local time</span></label>
+  </div>
+  <div class="tb-ages" id="tb-ages" hidden>
+    <div class="epochs" id="epochs" role="group" aria-label="Jump to an epoch"></div>
+    <div class="epoch-cap" id="epoch-cap" hidden aria-live="polite"></div>
+    <div class="ages-note" id="ages-note" hidden>Planets and Moon hidden: their positions are unreliable this far from today.</div>
+  </div>
+</footer>
+
+<div id="hint" class="panel" hidden>
+  <div class="eyebrow">Welcome to Sky Atlas</div>
+  <ul>
+    <li><b>Drag</b> to turn the globe, <b>scroll or pinch</b> to zoom.</li>
+    <li><b>Tap the globe</b> to travel there, then <b>Look up from here</b>.</li>
+    <li>In the sky, <b>tap any star or planet</b> for its card, and watch the explainer on the right.</li>
+  </ul>
+  <button id="hint-ok" class="btn primary">Got it</button>
+</div>
+<div id="loading" role="status"><div class="ld-name">Sky Atlas</div><div id="loading-text">Loading the sky…</div><div class="ld-bar"><i></i></div></div>
+<div id="fallback" hidden>WebGL is not available in this browser, so Sky Atlas cannot draw the globe.</div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script type="module" src="js/main.js"></script>
+<script type="module" src="js/shell.js"></script>
+</body>
+</html>
