@@ -1,6 +1,6 @@
 // Sky Atlas service worker. Bump CACHE_VERSION to force every client to rebuild its cache.
 // All URLs are relative to this file, so the app works from a sub-path (e.g. GitHub Pages /sky-atlas/).
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE = 'sky-atlas-' + CACHE_VERSION;
 
 // App shell + local assets. Missing optional files (a 404) are skipped, never fail the install.
@@ -8,7 +8,7 @@ const CACHE = 'sky-atlas-' + CACHE_VERSION;
 const PRECACHE = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/main.js', 'js/astro.js', 'js/cards.js', 'js/cities.js', 'js/data.js', 'js/explainer.js', 'js/globe.js', 'js/labels.js',
-  'js/mini.js', 'js/search.js', 'js/shaders.js', 'js/shell.js', 'js/sky.js', 'js/view.js', 'js/ages.js', 'js/skyquality.js',
+  'js/mini.js', 'js/search.js', 'js/shaders.js', 'js/shell.js', 'js/dock.js', 'js/sky.js', 'js/view.js', 'js/ages.js', 'js/skyquality.js',
   'vendor/astronomy.browser.min.js', 'vendor/three.module.min.js',
   'data/cities.txt', 'data/constellations.json', 'data/constellations.lines.json', 'data/dsos.bright.json', 'data/mw.json',
   'data/starnames.json', 'data/stars.6.json', 'data/starextra.json',

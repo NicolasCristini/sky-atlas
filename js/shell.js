@@ -15,17 +15,30 @@ const ls = {
 
 // ---- layout variables: measured heights so sheets/buttons stack above the time bar and below the header ----
 (function layoutVars() {
-  const watch = (sel, fn) => {
-    const el = document.querySelector(sel); if (!el) return;
-    const run = () => fn(el);
-    run();
-    if ('ResizeObserver' in window) new ResizeObserver(run).observe(el);
-    window.addEventListener('resize', run);
+  // --tb-top: distance from the bottom of the viewport to the top of whatever sits at the bottom edge: the time bar on desktop/tablet,
+  // the icon dock on phones (portrait). In landscape phones the dock is a column on the right, so only the safe area is reserved.
+  const isPhone = () => root.classList.contains('phone');
+  const setTop = () => {
+    const land = root.classList.contains('land');
+    if (isPhone()) {
+      const d = document.getElementById('dock'), r = d && d.getBoundingClientRect();
+      root.style.setProperty('--tb-top', land ? 'var(--sab)' : Math.max(0, Math.round(window.innerHeight - (r ? r.top : window.innerHeight))) + 'px');
+    } else {
+      const el = document.getElementById('timebar'), r = el && el.getBoundingClientRect();
+      if (r) root.style.setProperty('--tb-top', Math.max(0, Math.round(window.innerHeight - r.top)) + 'px');
+    }
   };
-  // distance from the bottom of the viewport to the top of the time bar
-  watch('#timebar', (el) => { const r = el.getBoundingClientRect(); root.style.setProperty('--tb-top', Math.max(0, Math.round(window.innerHeight - r.top)) + 'px'); });
-  // bottom edge of the header card (for the travel HUD on phones)
-  watch('#place', (el) => { const r = el.getBoundingClientRect(); root.style.setProperty('--hdr-b', Math.round(r.bottom) + 'px'); });
+  // bottom edge of the header card (desktop) or the status line (phones): the travel HUD and hints hang below it
+  const setHdr = () => {
+    const el = document.getElementById(isPhone() ? 'status' : 'place'); if (!el) return;
+    const r = el.getBoundingClientRect(); root.style.setProperty('--hdr-b', Math.round(r.bottom) + 'px');
+  };
+  const run = () => { setTop(); setHdr(); };
+  run();
+  if ('ResizeObserver' in window) { const ro = new ResizeObserver(run); ['timebar', 'place', 'dock', 'status'].forEach((id) => { const el = document.getElementById(id); if (el) ro.observe(el); }); }
+  window.addEventListener('resize', run);
+  new MutationObserver(run).observe(root, { attributes: true, attributeFilter: ['class'] });   // phone <-> desktop switch
+  window.__relayout = run;
 })();
 
 // ---- Safari: no pinch/double-tap zoom of the page itself (the canvas handles its own gestures) ----

@@ -419,3 +419,111 @@ body.tm-ages .cta, body.tm-ages #mini { bottom: calc(var(--tb-top) + 12px); }
   #timebar .tb-row:first-child { gap: 8px; }
   .readout .k { font-size: 11px; letter-spacing: .06em; }
 }
+
+/* ======================= phones: sky first. A slim status line, a bottom icon dock, and every panel as a sheet (js/dock.js) =======================
+   html.phone  = width < 760px, or a short landscape phone (set by the inline script in <head>);  html.land = the landscape case.
+   Desktop and tablet never match any rule below. */
+#status, #dock, #time-pill { display: none; }
+@keyframes dk-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+html.phone {
+  --sheet-max: min(46dvh, calc(100dvh - var(--tb-top) - var(--hdr-b) - 20px));
+  --scrim-shadow: 0 1px 2px rgba(0, 0, 0, .95), 0 0 9px rgba(0, 0, 0, .75);
+}
+
+/* ---- status line: bare text over the sky ---- */
+.phone #status { display: flex; position: fixed; z-index: 7; top: calc(var(--sat) + 4px); left: calc(12px + var(--sal)); right: calc(12px + var(--sar)); justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; }
+.phone .st-btn { pointer-events: auto; display: flex; flex-direction: column; justify-content: center; min-height: 44px; min-width: 44px; padding: 3px 8px; margin: 0 -8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); text-align: left; text-shadow: var(--scrim-shadow); -webkit-tap-highlight-color: transparent; }
+.phone .st-place { flex: 1 1 auto; min-width: 0; align-items: flex-start; }
+.phone .st-time { flex: none; align-items: flex-end; text-align: right; }
+.phone .st-name { display: block; max-width: 100%; font-size: 18px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phone .st-sub { display: block; font-size: 12px; line-height: 1.25; color: var(--ink-2); white-space: nowrap; }
+.phone .st-btn[aria-expanded="true"] .st-name { color: var(--accent); }
+.phone .st-btn:active { background: rgba(255, 255, 255, .06); }
+
+/* ---- the dock: nearly transparent glass, icons first ---- */
+.phone #dock { display: flex; position: fixed; z-index: 14; left: calc(12px + var(--sal)); right: calc(12px + var(--sar)); bottom: calc(8px + var(--sab)); height: 56px; padding: 4px 6px; align-items: center; justify-content: space-between; border-radius: 22px; background: rgba(8, 12, 24, .2); border: 1px solid rgba(176, 200, 255, .12); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); }
+.dk { position: relative; flex: 1 1 0; min-width: 44px; height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; border: 0; border-radius: 16px; background: transparent; color: rgba(226, 235, 255, .86); font-size: 9.5px; line-height: 1; letter-spacing: .02em; transition: color var(--t), background var(--t), box-shadow var(--t); -webkit-tap-highlight-color: transparent; }
+.dk svg { width: 22px; height: 22px; flex: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .75)); }
+.dk span { text-shadow: 0 1px 2px rgba(0, 0, 0, .85); white-space: nowrap; }
+.dk:active { background: rgba(255, 255, 255, .09); }
+.dk.on, body.mode-globe #dk-mode { color: var(--accent); background: rgba(242, 193, 78, .12); box-shadow: 0 0 0 1px rgba(242, 193, 78, .3) inset; }
+.dk .ic-globe, body.mode-sky .dk .ic-sky { display: none; }
+body.mode-sky .dk .ic-globe { display: block; }
+body.busy #dk-mode { opacity: .55; }
+
+/* ---- sheets: the existing panels, lifted above the dock ---- */
+.phone #left-col, .phone #right-col, .phone #toolbar, .phone .menu-wrap { display: contents; }
+.phone .tool-btn, .phone .place-top, .phone .cta, .phone .ex-expand { display: none; }
+.phone #place:not(.sheet-open), .phone #timebar:not(.sheet-open) { display: none; }
+.phone #place, .phone #timebar, .phone .menu, .phone #explainer, .phone #card {
+  position: fixed; left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); top: auto; bottom: calc(var(--tb-top) + 8px);
+  width: auto; max-width: none; margin: 0; transform: none; z-index: 13; max-height: var(--sheet-max); overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(9, 14, 26, .9); pointer-events: auto; animation: dk-in 220ms cubic-bezier(.2, .8, .2, 1);
+}
+.phone #place { padding: 20px 12px 12px; }
+.phone #timebar { padding: 20px 12px 10px; }
+.phone #card { padding: 20px 16px 16px; }
+.phone .menu, .phone .sky-menu { padding: 22px 16px 12px; }
+.phone .ex-head { padding-top: 20px; }
+.phone #place::before, .phone #timebar::before, .phone .menu::before, .phone #card::before, .phone .ex-head::before { content: ""; position: absolute; left: 50%; top: 7px; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: rgba(176, 200, 255, .34); pointer-events: none; }
+.phone .ex-head { position: sticky; }
+.phone .sheet-dragging { animation: none; transition: none; }
+.phone .search { margin-top: 0; }
+.phone .chips { display: flex; flex-wrap: nowrap; overflow-x: auto; margin-top: 10px; }
+.phone .search { flex-wrap: wrap; }
+.phone #suggest { position: static; flex: 0 0 calc(100% + 14px); margin: 0 -2px 0 -12px; padding: 4px; border: 0; border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; box-shadow: none; background: transparent; }
+/* typing: the sheet rides at the top, under the status line, so the results stay above the on-screen keyboard (--vv-* come from visualViewport) */
+.phone #place.typing { bottom: auto; top: calc(var(--vv-top, 0px) + var(--hdr-b)); max-height: calc(var(--vv-h, 100dvh) - var(--hdr-b) - 8px); animation: none; }
+.phone #explainer.compact { display: block; overflow: auto; flex: none; }
+.phone #explainer.compact > :not(.ex-head) { display: block; }
+.phone #explainer.compact.closed { display: none; }
+.phone .sky-menu { width: auto; }
+.phone #sky-menu[hidden], .phone #layers-menu[hidden] { display: none; }
+.phone .menu .row { min-height: 44px; }
+
+/* the sky-side things that used to sit above the time bar */
+.phone #mini { width: 80px; height: 80px; left: calc(8px + var(--sal)); bottom: calc(var(--tb-top) + 8px); z-index: 6; }
+.phone .mini-btn { width: 26px; height: 26px; right: -3px; top: -3px; }
+.phone .mini-btn::after { content: ""; position: absolute; inset: -9px; }
+body.sheet-on #mini, body.sheet-on #time-pill { visibility: hidden; pointer-events: none; }
+.phone #caption { left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); width: fit-content; max-width: none; margin: 0 auto; transform: none; bottom: calc(var(--tb-top) + 96px); animation: dk-in 220ms cubic-bezier(.2, .8, .2, 1); }
+body.card-on #caption { bottom: auto; top: calc(var(--hdr-b) + 8px); }
+.phone #travel-hud { left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); top: calc(var(--hdr-b) + 6px); }
+.phone #hint { top: calc(var(--hdr-b) + 8px); transform: translateX(-50%); max-height: calc(100dvh - var(--hdr-b) - var(--tb-top) - 24px); }
+.phone #ios-hint { top: calc(var(--hdr-b) + 8px); bottom: auto; }
+
+/* the time pill: shows that the clock is not at normal speed / not at the present, while the Time sheet is closed */
+.phone #time-pill { display: inline-flex; position: fixed; z-index: 9; right: calc(10px + var(--sar)); bottom: calc(var(--tb-top) + 8px); height: 30px; padding: 0 12px; gap: 6px; align-items: center; border-radius: 15px; border: 1px solid rgba(242, 193, 78, .4); background: rgba(9, 14, 26, .5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--accent); font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); animation: dk-in 220ms cubic-bezier(.2, .8, .2, 1); -webkit-tap-highlight-color: transparent; }
+.phone #time-pill[hidden] { display: none; }
+.phone #time-pill::after { content: ""; position: absolute; left: -4px; right: -4px; top: -8px; bottom: -8px; }
+body.journey #time-pill { display: none !important; }
+
+/* ---- phone landscape: the dock is a column on the right edge, sheets are side panels beside it ---- */
+html.land { --dock-r: calc(70px + var(--sar)); --sheet-max: calc(100dvh - var(--sat) - var(--sab) - 16px); }
+.land #dock { top: 50%; bottom: auto; left: auto; right: calc(6px + var(--sar)); width: 56px; height: auto; transform: translateY(-50%); flex-direction: column; justify-content: center; gap: 2px; padding: 6px 4px; border-radius: 20px; }
+.land .dk { flex: none; width: 48px; height: 46px; min-width: 0; }
+.land #status { right: auto; justify-content: flex-start; gap: 18px; }
+.land .st-place { flex: none; max-width: 170px; }
+.land #place, .land #timebar, .land .menu, .land #explainer, .land #card { left: auto; right: var(--dock-r); width: min(340px, calc(100vw - 280px - var(--dock-r))); bottom: calc(var(--sab) + 8px); }
+.land #place.typing { top: calc(var(--vv-top, 0px) + 8px); max-height: calc(var(--vv-h, 100dvh) - 16px); }
+.land #layers-menu:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; column-gap: 4px; align-content: start; }
+.land #time-pill { right: var(--dock-r); bottom: calc(var(--sab) + 8px); }
+.land #mini { bottom: calc(var(--sab) + 8px); }
+.land #caption { left: calc(100px + var(--sal)); right: var(--dock-r); margin: 0; bottom: calc(var(--sab) + 8px); }
+.land #travel-hud { right: auto; width: 320px; max-width: calc(100vw - 100px - var(--dock-r)); }
+.land #hint { left: calc(50% - 30px); }
+.land #ios-hint { left: calc(12px + var(--sal)); transform: none; }
+/* the compact time-bar layout (already used below 760px) also serves the landscape sheet */
+.land #timebar .tb-row:first-child { flex-wrap: wrap; gap: 8px; }
+.land .tb-slider { order: 5; flex: 1 1 100%; min-width: 0; }
+.land #now { margin-left: auto; }
+.land #timebar #speeds button { padding: 5px 8px; font-size: 12px; }
+.land .icon-btn.lg { width: 34px; height: 34px; }
+.land #timebar .tb-meta { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; justify-content: stretch; }
+.land #timebar .tb-meta > .tb-mode { grid-column: 1; grid-row: 1; justify-self: start; }
+.land #timebar .tb-meta > .readout:not(.rd-day):not(.rd-year):not(.rd-ages) { grid-column: 2; grid-row: 1; }
+.land #timebar .tb-meta > .rd-day, .land #timebar .tb-meta > .rd-year, .land #timebar .tb-meta > .rd-ages { grid-column: 1; grid-row: 2; min-width: 0; }
+.land #timebar .tb-meta > .switch { grid-column: 2; grid-row: 2; justify-self: end; }
+.land #timebar .rd-day #utc-input { flex: 1; min-width: 0; width: 100%; max-width: none; }
+.land #timebar { gap: 4px; }
