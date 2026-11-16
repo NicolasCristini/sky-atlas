@@ -919,6 +919,7 @@ async function init() {
     if (frameN % 20 === 1) updateLabelClip();
     if (S.tm === 'ages' && frameN % 24 === 0) refreshLive();
     if (S.sel && now - lastCardT > 500) { lastCardT = now; refreshCardLive(); }
+    if (hooks.frame) hooks.frame(now);   // the Learn area draws its teaching overlay here, after the sky, in the same frame
   }
 
   // phones: keep canvas labels out of the status-line strip (place + time) at the top

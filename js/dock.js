@@ -124,7 +124,7 @@ dock.addEventListener('click', (e) => {
   const b = e.target.closest('.dk'); if (!b) return;
   if (b.dataset.sheet) toggleSheet(b.dataset.sheet);
   else if (b.dataset.act === 'mode') toggleMode();
-  else if (b.dataset.act === 'lessons') { closeAll(); if (window.__lessons) window.__lessons.toggle(); }   // "Why": the lesson card first; the full explainer is its "More" link
+  else if (b.dataset.act === 'learn') { closeAll(); if (window.__learn) window.__learn.open(); }   // "Learn": the course; quick lessons and the explainer are its secondary links
 });
 $('#st-place').addEventListener('click', (e) => { e.stopPropagation(); toggleSheet('search'); });
 $('#st-time').addEventListener('click', (e) => { e.stopPropagation(); toggleSheet('time'); });
@@ -207,7 +207,7 @@ function hintWording(phone) {
   if (!hintLis[1]) return;
   if (phone) {
     hintLis[1].innerHTML = '<b>Tap the globe</b> to travel there, then tap <b>Look up</b> in the bar at the bottom.';
-    if (!hintExtra) { hintExtra = document.createElement('li'); hintExtra.innerHTML = 'That bar also holds <b>search</b>, <b>time</b>, <b>sky quality</b>, <b>layers</b> and the <b>explainer</b>.'; hintLis[1].after(hintExtra); }
+    if (!hintExtra) { hintExtra = document.createElement('li'); hintExtra.innerHTML = 'That bar also holds <b>search</b>, <b>time</b>, <b>sky quality</b>, <b>layers</b> and <b>Learn</b>.'; hintLis[1].after(hintExtra); }
   } else { hintLis[1].innerHTML = hintOrig; if (hintExtra) { hintExtra.remove(); hintExtra = null; } }
 }
 

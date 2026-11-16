@@ -16,19 +16,23 @@ const DEG = Math.PI / 180;
 
 export function initLessons(a) {
   const S = a.S, A = a.A, data = a.data, sky = a.sky;
-  const wrap = $('#lesson'), btn = $('#lesson-btn'), dockBtn = $('#dk-explain'), explainer = $('#explainer');
+  const wrap = $('#lesson'), explainer = $('#explainer');
   if (!wrap) return;
 
   // ---------------------------------------------------------------- persisted state
-  const st = { visible: true, collapsed: true, cur: 0, seen: [], tips: true };
+  // Explore is the app without teaching UI: the quick-lesson pill is hidden and "Tips while exploring" is off until the user opts in.
+  // v: 2 marks state saved after that change; older saves (which stored the old defaults) keep only the lessons already seen.
+  const st = { v: 2, visible: false, collapsed: true, cur: 0, seen: [], tips: false };
   try {
     const p = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (p && typeof p === 'object') {
-      if (typeof p.visible === 'boolean') st.visible = p.visible;
-      if (typeof p.collapsed === 'boolean') st.collapsed = p.collapsed;
       if (Number.isInteger(p.cur) && p.cur >= 0 && p.cur < N) st.cur = p.cur;
       if (Array.isArray(p.seen)) st.seen = p.seen.filter((i) => Number.isInteger(i) && i >= 0 && i < N);
-      if (typeof p.tips === 'boolean') st.tips = p.tips;
+      if (p.v === 2) {
+        if (typeof p.visible === 'boolean') st.visible = p.visible;
+        if (typeof p.collapsed === 'boolean') st.collapsed = p.collapsed;
+        if (typeof p.tips === 'boolean') st.tips = p.tips;
+      }
     }
   } catch (e) { /* storage unavailable */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* ignore */ } };
@@ -118,7 +122,7 @@ export function initLessons(a) {
   // ---------------------------------------------------------------- rendering
   let run = null;           // the running demo script: { cancel }
   let snap = null;          // the user's state, held from the first demo step until "Back to my sky"
-  let restoring = false, caption = '', tipIdx = -1, tipTimer = 0, lastBody = '';
+  let restoring = false, caption = '', tipIdx = -1, tipTimer = 0, lastBody = '', onCap = null;   // onCap: the Learn player listens to demo captions
   const cur = () => LESSONS[st.cur];
   const demoActive = () => !!(run || snap || restoring);
   function renderDots() {
@@ -154,8 +158,6 @@ export function initLessons(a) {
     tick.hidden = !seen; titleEl.textContent = l.title;
     renderPill(); renderDots(); renderButtons(); renderBody(true);
     const open = st.visible && !st.collapsed;
-    btn.classList.toggle('on', open); btn.setAttribute('aria-expanded', String(open));
-    if (dockBtn) { dockBtn.classList.toggle('on', open); dockBtn.setAttribute('aria-expanded', String(open)); }
     if (open && !st.seen.includes(st.cur)) { st.seen.push(st.cur); save(); renderDots(); tick.hidden = false; }
     place();
   }
@@ -166,7 +168,7 @@ export function initLessons(a) {
     if (was !== st.cur) { lKey = ''; save(); }
     render();
   }
-  function setCollapsed(c) { st.collapsed = c; if (!c) { tipIdx = -1; clearTimeout(tipTimer); pill.classList.remove('pulse'); } save(); render(); }
+  function setCollapsed(c) { st.collapsed = c; if (c && !st.tips) st.visible = false; if (!c) { tipIdx = -1; clearTimeout(tipTimer); pill.classList.remove('pulse'); } save(); render(); }
   function toggle() {
     if (!st.visible || st.collapsed) { st.visible = true; setCollapsed(false); } else { st.visible = false; save(); render(); }
   }
@@ -199,7 +201,6 @@ export function initLessons(a) {
     else if (act === 'more') openMore();
   });
   pill.addEventListener('click', () => setCollapsed(false));
-  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
   card.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') { e.preventDefault(); go(st.cur - 1); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); go(st.cur + 1); }
@@ -310,7 +311,7 @@ export function initLessons(a) {
   const D = {
     S, A, a, L: () => { lKey = ''; return buildL(); }, phone: false,
     wait,
-    async say(text, ms = 2600) { chk(); caption = text; renderBody(); if (ms > 0) await wait(ms); },
+    async say(text, ms = 2600) { chk(); caption = text; renderBody(); if (onCap) onCap(text); if (ms > 0) await wait(ms); },
     async until(pred, maxMs = 8000) { const t0 = performance.now(); while (!pred() && performance.now() - t0 < maxMs) await wait(60); },
     async settle() { while (S.trans || S.travel) await wait(50); },
     async prep(o = {}) {
@@ -348,7 +349,7 @@ export function initLessons(a) {
       chk();
       S.speed = speed; S.playing = true; a.syncPlay();
       try {
-        if (lines && lines.length) { const each = Math.max(2500, ms / lines.length); for (const t of lines) { caption = t; renderBody(); await wait(each); } }
+        if (lines && lines.length) { const each = Math.max(2500, ms / lines.length); for (const t of lines) { caption = t; renderBody(); if (onCap) onCap(t); await wait(each); } }
         else await wait(ms);
       } finally { S.playing = false; S.speed = kind === 'year' ? S.speedBy.year : 1; a.syncPlay(); }
     },
@@ -445,6 +446,36 @@ export function initLessons(a) {
     }
   }
 
+  // ---------------------------------------------------------------- engine for the Learn player (js/learn.js)
+  // The same toolkit, snapshot and restore the quick lessons use. begin() snapshots the user's Explore state once; end() puts it all back.
+  const engine = {
+    D, takeSnap,
+    get held() { return !!snap; },
+    get running() { return !!run; },
+    get restoring() { return restoring; },
+    /** Snapshot the user's sky (once: a second call while held keeps the first snapshot). */
+    async begin() { if (restoring) return; if (!snap) { if (run) cancelRun(); await settleRaw(); snap = takeSnap(); } return snap; },
+    /** Restore the snapshot. opts as restore(): { instant, keepPlace }. */
+    async end(opts = { instant: true }) { cancelRun(); run = null; await restore(opts); onCap = null; },
+    /** Run a script against the demo toolkit. hooks.onCaption(text) mirrors D.say / D.play captions. Resolves true if it finished, false if cancelled. */
+    async runScript(fn, hooks = {}) {
+      if (restoring) return false;
+      if (run) cancelRun();
+      await settleRaw();
+      D.phone = isPhone(); onCap = hooks.onCaption || null; caption = '';
+      const r = run = { cancel: false };
+      try { await fn(D); } catch (e) { if (e !== CANCEL) { console.error(e); } return false; }
+      finally { if (run === r) { run = null; S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); } }
+      return !r.cancel;
+    },
+    cancel() { cancelRun(); },
+    /** Stop whatever is moving without restoring: a lesson step ended. */
+    stop() { if (run) { run.cancel = true; } if (S.travel) S.travel.dur = 1; S.ages.tween = null; S.slew = null; S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); },
+    clock: { get: () => ({ playing: S.playing, speed: S.speed }) },
+    setQuickVisible(v) { st.visible = v; render(); },
+  };
+  window.__lessons.engine = engine;
+
   // a manual trip or a guided journey takes over: the demo ends, the user keeps their new place
   a.hooks.userTravel = () => { if (!snap && !run) return; if (S.travel) { cancelRun(); return; } restore({ keepPlace: true }); };
   explainer.addEventListener('click', (e) => { if (e.target.closest('[data-act=journey]') && (snap || run)) restore({ keepPlace: true }); }, true);
@@ -455,12 +486,12 @@ export function initLessons(a) {
   function syncTrackers() { trk.tm = S.tm; trk.sel = selKey(); trk.travel = null; trk.fastSince = 0; }
   function tryTip(i, force) {
     if (!force) {
-      if (!st.tips || !st.visible || !st.collapsed || demoActive()) return;
+      if (!st.tips || (st.visible && !st.collapsed) || demoActive()) return;
       if (trk.shown.has(i)) return;
       const now = performance.now(); if (now - trk.lastTip < 45000) return;
       trk.lastTip = now;
     }
-    trk.shown.add(i); tipIdx = i; st.cur = i; lKey = ''; caption = ''; save(); render();
+    trk.shown.add(i); tipIdx = i; st.cur = i; st.visible = true; st.collapsed = true; lKey = ''; caption = ''; save(); render();
     pill.classList.add('pulse'); clearTimeout(tipTimer); tipTimer = setTimeout(() => pill.classList.remove('pulse'), 7000);
   }
   function tipsTick() {
