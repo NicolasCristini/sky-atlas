@@ -55,7 +55,7 @@ const SHEETS = {
   },
   sky: { btn: '#dk-sky', el: skyMenu, open: () => !skyMenu.hidden, set(v) { if (v !== !skyMenu.hidden) skyBtn.click(); } },
   layers: { btn: '#dk-layers', el: layersMenu, open: () => !layersMenu.hidden, set(v) { if (v !== !layersMenu.hidden) layersBtn.click(); } },
-  explain: { btn: '#dk-explain', el: explainer, open: () => !explainer.classList.contains('closed'), set(v) { if (v !== !explainer.classList.contains('closed')) exBtn.click(); } },
+  explain: { btn: '#dk-explain-sheet', el: explainer, open: () => !explainer.classList.contains('closed'), set(v) { if (v !== !explainer.classList.contains('closed')) exBtn.click(); } },
 };
 const NAMES = Object.keys(SHEETS);
 const stamp = {}, was = {};
@@ -124,6 +124,7 @@ dock.addEventListener('click', (e) => {
   const b = e.target.closest('.dk'); if (!b) return;
   if (b.dataset.sheet) toggleSheet(b.dataset.sheet);
   else if (b.dataset.act === 'mode') toggleMode();
+  else if (b.dataset.act === 'lessons') { closeAll(); if (window.__lessons) window.__lessons.toggle(); }   // "Why": the lesson card first; the full explainer is its "More" link
 });
 $('#st-place').addEventListener('click', (e) => { e.stopPropagation(); toggleSheet('search'); });
 $('#st-time').addEventListener('click', (e) => { e.stopPropagation(); toggleSheet('time'); });

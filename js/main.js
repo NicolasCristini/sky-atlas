@@ -13,6 +13,7 @@ import * as EX from './explainer.js';
 import * as CARD from './cards.js';
 import { QUALITY_DEFAULT, EXPOSURE_DEFAULT, qualityParams, countVisible, aboutCount, exposureFromSlider, sliderFromExposure } from './skyquality.js';
 import { SLIDER_MAX, AGES_MAX, sliderToYears, yearsToSlider, decimalYear, formatYear, bodiesFade, EPOCHS, nearestPoleStar } from './ages.js';
+import { initLessons } from './lessonui.js';
 
 const $ = (s) => document.querySelector(s);
 const DEG = A.DEG, RAD = A.RAD;
@@ -80,11 +81,12 @@ async function init() {
 
   // ----- scene objects
   const sky = createSky(data, PX); scene.add(sky.group);
+  setTimeout(() => requestAnimationFrame(() => sky.loadMilkyWay(renderer, document.documentElement.classList.contains('phone'))), 600);   // photographic Milky Way, lazily after first render
   const globe = createGlobe(tex, sunWorld, PX); scene.add(globe.root);
   const dome = createDome(); scene.add(dome.mesh);
   const rig = createHorizonRig(); scene.add(rig.group);
   rig.group.matrixAutoUpdate = true;
-  const mini = new MiniGlobe($('#mini'), tex, sunWorld, PX, (lat, lon) => travelTo(lat, lon));
+  const mini = new MiniGlobe($('#mini'), tex, sunWorld, PX, (lat, lon) => goTo(lat, lon));
 
   // ----- labels
   const labels = new LabelLayer($('#labels'));
@@ -761,7 +763,8 @@ async function init() {
   const chipsEl = $('#chips');
   chipsEl.innerHTML = QUICK.map((q, i) => `<button class="chip" data-i="${i}">${q.label}</button>`).join('');
   chipsEl.addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (!b) return; const q = QUICK[+b.dataset.i]; goTo(q.lat, q.lon); });
-  function goTo(lat, lon) { if (S.journey) S.journey.cancel = true; travelTo(lat, lon); }
+  const hooks = { userTravel: null };   // the lessons module listens here: a manual trip ends a running lesson demo
+  function goTo(lat, lon) { if (S.journey) S.journey.cancel = true; if (hooks.userTravel) hooks.userTravel(); travelTo(lat, lon); }
   initSearch({ input: $('#search'), list: $('#suggest'), spinner: $('#search-spin'), live: $('#search-live'), onPick: (c) => goTo(c.lat, c.lon) });
   $('#geo').addEventListener('click', () => { if (!navigator.geolocation) return; try { navigator.geolocation.getCurrentPosition((p) => goTo(p.coords.latitude, p.coords.longitude), () => {}, { timeout: 8000, maximumAge: 600000 }); } catch (e) { /* fail silently */ } });
 
@@ -913,8 +916,17 @@ async function init() {
     // mini globe
     if (!$('#mini').hidden && now - lastMiniT > 33) { lastMiniT = now; mini.update(0.033); mini.render(now / 1000); }
     if (frameN % 6 === 0) { updateTimeUI(); updateSolar(); if (!skyMenu.hidden) updateStarCount(); }
+    if (frameN % 20 === 1) updateLabelClip();
     if (S.tm === 'ages' && frameN % 24 === 0) refreshLive();
     if (S.sel && now - lastCardT > 500) { lastCardT = now; refreshCardLive(); }
+  }
+
+  // phones: keep canvas labels out of the status-line strip (place + time) at the top
+  function updateLabelClip() {
+    const st = document.documentElement.classList.contains('phone') ? $('#status') : null;
+    if (!st) { lblCtx.clip = null; return; }
+    const r = st.getBoundingClientRect();
+    lblCtx.clip = r.height > 0 ? { l: r.left - 6, r: r.right + 6, b: r.bottom + 2 } : null;
   }
 
   function updateIntro(now, dt) {
@@ -984,6 +996,7 @@ async function init() {
     sky.uniforms.uScale.value = fovS;
     // layers
     sky.lines.visible = lay.lines; sky.lineMat.opacity = lay.daylight ? 0.42 * (1 - skyA * 0.7) : 0.42; sky.mw.visible = lay.mw && mwV > 0.01; sky.mw.material.uniforms.uOpacity.value = 0.9 * mwV * starFade;
+    sky.mwUpdate({ on: lay.mw, v: mwV, fade: starFade, land, expo: S.expo, pol: qp.pol, up: su.uUp.value });
     rig.grid.visible = lay.grid; sky.eqGroup.visible = lay.eq && land > 0.3; sky.bodyPts.visible = true; sky.dsos.visible = lay.starNames;
     // globe objects
     const showGlobe = h > 0.003;
@@ -1035,5 +1048,7 @@ async function init() {
     S, sky, globe, mini, data, cam, A, enterSky, leaveSky, travelTo, select, selectCons, slewTo, updateCelestial, placeInstant, rotMat, runJourney,
     altAzOfEq, centreOnSelection, onClick, closeCard, scene, lblCtx, PX, setObserver, labels, renderer, get sunWorld() { return sunWorld; },
     setTimeMode, goEpoch, setYears, lookAtPole, get precP() { return precP; }, get pole() { return pole; }, syncSkyUI, savePrefs, poleStarHTML,
+    hooks, syncPlay, syncKeep, setLocalSolar, syncEpochs, updateTimeUI, refreshLive, setExplainer,
   };
+  try { initLessons(window.__atlas); } catch (e) { console.error('lessons', e); }
 }

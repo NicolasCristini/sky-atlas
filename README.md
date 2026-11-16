@@ -10,6 +10,8 @@ Pick any place on a 3D globe, see the sky from there, and understand **why the s
 - **Sky control** (toolbar, next to Layers): a *Sky quality* slider with named stops (Big city, Suburb, Countryside, Dark site, Enhanced) that drives the limiting magnitude (stars fade out smoothly near it), star gain, Milky Way visibility and a warm light-pollution haze from the horizon, with a live "about N stars above your horizon" count; and a *Star brightness* slider (0.5x to 3x). Both persist in `localStorage` together with the layer toggles.
 - **Time scales** (time bar): *Day* (the existing +-12 h scrubber), *Year* (+-6 months at fixed local solar time: the seasons turn the night sky), *Ages* (about 11 000 BC to AD 15 000 on a log scrubber, with epoch chips). Ages applies long-term precession and proper motion to the star field, keeps the calendar date and local solar time, and re-tilts the Sun to the obliquity of the epoch. The pole marker names the pole star of the epoch ("pole star: Thuban, 1.3 deg away"). Moon and planets come from the instant `base + years`, and fade out beyond about 4000 years from 2000, where their positions are unreliable. Far from today the model is approximate (see below). Returning to Day mode restores the real present sky exactly.
 
+- **Lessons** (the light-bulb button in the toolbar, or **Why** in the phone dock): fourteen one-idea cards that float over the sky, each with live numbers for your place and time. **Show me** runs a short scripted demo with the app's own controls (slew, time-lapse, Year/Ages, layers, sky quality, trips) and **Back to my sky** restores your place, view, time mode and instant, speed, layers and sky quality exactly. **More** opens the full explainer at the related section. A collapsed card is a one-line pill; while it is collapsed, contextual tips (a trip across the equator, selecting Polaris or a planet, entering Ages or Year mode, moving the sky-quality slider, running time fast) surface the matching lesson with a gold pulse, at most one per 45 s; switch them off under Layers > *Tips while exploring*. Content and demo scripts are in `js/lessons.js`, the card, snapshot/restore and tips in `js/lessonui.js`. Phones: the card sits above the dock (top-centre in landscape), swipe left/right changes lesson, and it hides while a sheet is open.
+
 Keys: `G` globe, `S` sky, `Space` play/pause, `Esc` close card/menus.
 
 ## Run
@@ -50,6 +52,12 @@ It is loaded the first time the search box is focused. Until then, and as a fall
 
 Icons are rendered with `python3 tools/make_icons.py` (standard library only).
 
+## Milky Way image
+
+The Milky Way is a real all-sky photograph-like map drawn additively on an inside-out sphere in the same group as the stars (so it shares sidereal rotation and precession). `js/sky.js` loads it lazily after the first render (fade-in about 1 s): `img/milkyway-4k.jpg` (4096x2048) on desktops, `img/milkyway-2k.jpg` (2048x1024) on phones or GPUs with a max texture size below 4096. If it cannot be loaded, the old polygon band (`data/mw.json`) stays. Debug hook: `?mwimg=name.jpg` loads `img/name.jpg` instead (a missing name exercises the fallback). Shader: `MW2_FRAG` in `js/shaders.js` (threshold and gain per sky quality, horizon light-pollution wash, analytic galactic halo, dither).
+
+Rebuild with `tools/make_milkyway.py` from NASA SVS 4851 `milkyway_2020_8k.exr` (see the script header for the exact file and the venv it needs).
+
 ## Test
 
 ```sh
@@ -73,8 +81,10 @@ Covers the pure maths in `js/astro.js` (and `js/ages.js`, `js/skyquality.js`): P
 | `js/view.js` | Camera pose helpers and easing |
 | `js/shaders.js` | GLSL for stars, bodies, Milky Way, Earth, atmosphere, pin, ground dome |
 | `js/cards.js`, `js/explainer.js` | Info-card and explainer-panel content |
+| `js/lessons.js`, `js/lessonui.js` | Lessons: content + demo scripts; the card, snapshot/restore of your sky, tips. `tests/lessons.harness.js` is a browser-side check of every demo |
 | `js/ages.js`, `js/skyquality.js` | Pure helpers: Ages scrubber mapping, year formatting, epoch chips, pole-star search; sky-quality stops, star counts |
 | `data/starextra.json`, `tools/build_starextra.py` | Proper motion, distance and spectral type per star, built from the HYG database |
+| `img/milkyway-4k.jpg`, `img/milkyway-2k.jpg`, `tools/make_milkyway.py` | Milky Way sky texture (desktop / phone) and the script that bakes it from NASA SVS 4851 |
 | `js/cities.js` | Built-in cities, the lazy worldwide place index (search + "Near X" naming) |
 | `js/search.js` | Search box: combobox, keyboard, highlighting, coordinates |
 | `js/shell.js` | Service-worker registration, safe-area/layout variables, touch wording, iOS install hint |
@@ -91,6 +101,7 @@ Approximations: Sun, Moon and planets use geocentric positions (the Moon's paral
 
 ## Credits
 
+- Milky Way image: NASA/Goddard Space Flight Center Scientific Visualization Studio, "Deep Star Maps 2020" (SVS 4851, `milkyway_2020_8k.exr`, public domain), built from Gaia DR2 (ESA/Gaia/DPAC); resampled, denoised and tone-mapped by `tools/make_milkyway.py`.
 - Proper motion, distance and spectral type: [HYG database](https://github.com/astronexus/HYG-Database) v4.1 (CC BY-SA 4.0), reduced by `tools/build_starextra.py`.
 - Star, constellation, Milky Way and deep-sky data: [d3-celestial](https://github.com/ofrohn/d3-celestial) by Olaf Frohn (BSD-3-Clause).
 - [astronomy-engine](https://github.com/cosinekitty/astronomy) 2.1.19 by Don Cross (MIT).

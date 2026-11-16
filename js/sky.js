@@ -1,7 +1,7 @@
 // The celestial sphere: stars, constellation lines, Milky Way, Sun/Moon/planets, equator/ecliptic, DSOs.
 // Everything is built once in equatorial (J2000) coordinates inside `group`; main.js re-centres and rotates it.
 import * as THREE from '../vendor/three.module.min.js';
-import { STAR_VERT, STAR_FRAG, BODY_VERT, BODY_FRAG, MW_VERT, MW_FRAG } from './shaders.js';
+import { STAR_VERT, STAR_FRAG, BODY_VERT, BODY_FRAG, MW_VERT, MW_FRAG, MW2_VERT, MW2_FRAG } from './shaders.js';
 import { eqToVec, bvToTemp, DEG, vecToEq, movedStar } from './astro.js';
 
 export const R_SKY = 50;
@@ -157,6 +157,20 @@ export function createSky(data, px) {
   const mw = new THREE.Mesh(new THREE.SphereGeometry(R_SKY * 0.98, 48, 32), mwMat);
   mw.renderOrder = -100; mw.frustumCulled = false;
   group.add(mw);
+
+  // Photographic Milky Way (lazy): a second sphere using the baked NASA map. The polygon one above is the fallback until it has loaded
+  // (or for good if the image cannot be fetched). Same group, so it shares sidereal rotation and precession with the stars.
+  const gv = (ra, dec) => { const a = ra * DEG, d = dec * DEG; return new THREE.Vector3(Math.cos(d) * Math.cos(a), Math.sin(d), -Math.cos(d) * Math.sin(a)); };
+  const mw2U = {
+    uTex: { value: null }, uAmp: { value: 0 }, uThr: { value: 0 }, uPol: { value: 0 }, uLand: { value: 0 }, uUp: { value: new THREE.Vector3(0, 1, 0) },
+    uNgp: { value: gv(192.85948, 27.12825) }, uGc: { value: gv(266.40499, -28.93617) }, uHalo: { value: 0.06 },
+  };
+  const mw2 = new THREE.Mesh(new THREE.SphereGeometry(R_SKY * 0.98, 64, 48), new THREE.ShaderMaterial({
+    vertexShader: MW2_VERT, fragmentShader: MW2_FRAG, uniforms: mw2U, side: THREE.BackSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true,
+  }));
+  mw2.renderOrder = -99; mw2.frustumCulled = false; mw2.visible = false;
+  group.add(mw2);
+  let mw2Ready = false, mw2T0 = 0, mw2Loading = false;
 
   // ----- constellation lines -----
   const lineMat = new THREE.LineBasicMaterial({ color: 0x7fa8ea, transparent: true, opacity: 0.42, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -393,6 +407,34 @@ export function createSky(data, px) {
       return best;
     },
     setStarFade(f) { uniforms.uFade.value = f; },
+    /** Load the photographic Milky Way after first render (4096 px on capable desktops, 2048 px on phones / small GPUs). `?mwimg=name` overrides the file (test hook). */
+    loadMilkyWay(renderer, phone) {
+      if (mw2Loading || mw2Ready) return; mw2Loading = true;
+      const big = !phone && renderer.capabilities.maxTextureSize >= 4096;
+      const name = new URLSearchParams(location.search).get('mwimg') || (big ? 'milkyway-4k.jpg' : 'milkyway-2k.jpg');
+      new THREE.TextureLoader().load('img/' + name, (t) => {
+        t.colorSpace = THREE.NoColorSpace; t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping;
+        t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = true;
+        t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        mw2U.uTex.value = t; mw2Ready = true; mw2T0 = performance.now();
+      }, undefined, () => { mw2Loading = false; console.warn('Milky Way image unavailable; using the simple band'); });
+    },
+    /**
+     * Per-frame Milky Way drive. p = { on: layer toggle, v: sky-quality visibility (0..1.8), fade: daylight star fade, land: 0 globe..1 landed,
+     * expo: exposure, pol: light pollution, up: zenith vector in the celestial frame }.
+     */
+    mwUpdate(p) {
+      if (!mw2Ready) return;
+      const fin = Math.min(1, (performance.now() - mw2T0) / 1000), ease = fin * fin * (3 - 2 * fin);
+      const v = Math.max(p.v, 0);
+      mw.visible = false;                                   // the polygon band hands over once the photo is up
+      mw2.visible = p.on && v > 0.01;
+      const lowV = Math.min(1, v);
+      mw2U.uThr.value = v >= 1 ? Math.max(-0.04 * (v - 1), -0.05) : 0.8 * (1 - Math.pow(lowV, 0.6));
+      const amp = (v < 1 ? Math.sqrt(lowV) : 1 + 0.6 * (v - 1)) * Math.pow(p.expo, 0.6) * (0.55 + 0.45 * p.land) * 1.05;
+      mw2U.uAmp.value = amp * p.fade * ease;
+      mw2U.uPol.value = p.pol; mw2U.uLand.value = p.land; mw2U.uUp.value.copy(p.up);
+    },
   };
   return api;
 }

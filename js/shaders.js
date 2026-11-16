@@ -237,3 +237,49 @@ void main(){
   float oa2 = oa + pa * (1.0 - oa);
   gl_FragColor = vec4(pm / max(oa2, 1e-4), oa2);
 }`;
+
+// Photographic Milky Way (NASA SVS Deep Star Maps 2020, baked by tools/make_milkyway.py). The texture is stored gamma-encoded
+// (about x^0.45) in equirectangular RA/Dec: centred on RA 0, RA increasing to the left, top row = Dec +90.
+export const MW2_VERT = /* glsl */`
+varying vec3 vDir;
+void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+export const MW2_FRAG = /* glsl */`
+precision highp float;
+uniform sampler2D uTex;
+uniform float uAmp;      // overall brightness (sky quality x exposure x fade-in x daylight)
+uniform float uThr;      // brightness threshold (encoded space): faint halo disappears first
+uniform float uPol; uniform float uLand; uniform vec3 uUp;   // light pollution washes the low sky out
+uniform vec3 uNgp; uniform vec3 uGc;                          // galactic pole and centre (unit, celestial frame)
+uniform float uHalo;
+varying vec3 vDir;
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+void main(){
+  vec3 d = normalize(vDir);
+  float ra = atan(-d.z, d.x);
+  float u1 = 0.5 - ra / 6.28318530718, u2 = fract(u1 + 0.5) - 0.5;      // two seam-free candidates: pick the smoother one for mip selection
+  float u = fract(u1);
+  vec2 g1 = vec2(dFdx(u1), dFdy(u1)), g2 = vec2(dFdx(u2), dFdy(u2));
+  vec2 gu = (abs(g1.x) + abs(g1.y) < abs(g2.x) + abs(g2.y)) ? g1 : g2;
+  float v = asin(clamp(d.y, -1.0, 1.0)) / 3.14159265359 + 0.5;
+  vec2 gv = vec2(dFdx(v), dFdy(v));
+  vec3 c = textureGrad(uTex, vec2(u, v), vec2(gu.x, gv.x), vec2(gu.y, gv.y)).rgb;
+  // soft analytic halo from galactic latitude/longitude, under the photo: brighter toward the centre, exponential fall-off with |b|
+  float sb = dot(d, uNgp), b = abs(asin(clamp(sb, -1.0, 1.0)));
+  float cg = acos(clamp(dot(d, uGc), -1.0, 1.0));
+  float halo = uHalo * exp(-b * 4.2) * (0.45 + 0.55 * exp(-cg * 1.1));
+  vec3 hc = vec3(0.60, 0.58, 0.55) * halo;
+  c = c + hc;
+  float lum = dot(c, vec3(0.30, 0.59, 0.11));
+  float sinAlt = dot(d, uUp);
+  float low = 1.0 - smoothstep(-0.05, 0.6, sinAlt);
+  float thr = uThr + uPol * uLand * 0.45 * low;
+  float k = smoothstep(thr, thr + 0.12 + 0.25 * thr, lum);              // soft knee
+  float s = max(lum - thr, 0.0) * k / max(lum, 1e-4);
+  vec3 col = c * s;
+  // natural tint: cooler where faint (outer arms), warm and bright in the bulge (already in the photo)
+  col *= mix(vec3(0.86, 0.95, 1.12), vec3(1.0), smoothstep(0.1, 0.6, lum));
+  col *= uAmp * (1.0 - uPol * uLand * 0.5 * low);
+  col = (1.0 - exp(-col * 1.6)) / 1.6;                                   // gentle shoulder: the bulge never clips to flat white
+  col += (hash(gl_FragCoord.xy) - 0.5) * (1.5 / 255.0) * step(0.0005, lum);
+  gl_FragColor = vec4(max(col, 0.0), 1.0);
+}`;

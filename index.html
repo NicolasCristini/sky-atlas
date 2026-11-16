@@ -79,6 +79,7 @@
       <button id="layers-btn" class="tool-btn" aria-haspopup="true" aria-expanded="false" aria-label="Layers" title="Choose what to draw: lines, names, grid, poles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5" opacity=".55"/></svg><span>Layers</span></button>
       <div id="layers-menu" class="panel menu" hidden></div>
     </div>
+    <button id="lesson-btn" class="tool-btn lsn-btn" aria-expanded="false" aria-controls="lesson" aria-label="Lessons: short ideas, shown live in the sky" title="Lessons: short ideas, shown live in the sky"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span class="sr-only">Lessons</span></button>
     <button id="explain-btn" class="tool-btn on" aria-expanded="true" aria-label="Why the sky changed" title="Why the sky changed: show or hide the explainer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.1"/></svg><span>Why the sky changed</span></button>
   </div>
   <aside id="card" class="panel" hidden aria-live="polite"></aside>
@@ -94,6 +95,8 @@
     <span class="sr-only" id="th-live" role="status" aria-live="polite"></span>
   </div>
 </div>
+
+<div id="lesson" hidden></div>
 
 <div id="caption" class="panel" hidden><span id="caption-text"></span><button id="caption-stop" class="icon-btn" aria-label="Stop journey" title="Stop journey"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
 
@@ -138,7 +141,7 @@
   <button id="dk-time" class="dk" type="button" data-sheet="time" aria-expanded="false" aria-controls="timebar" aria-label="Time" title="Time: scrub the day, the year or the ages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/></svg><span>Time</span></button>
   <button id="dk-sky" class="dk" type="button" data-sheet="sky" aria-expanded="false" aria-controls="sky-menu" aria-label="Sky quality and star brightness" title="How dark is your sky? Sky quality and star brightness"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l1.7 5.1 5.3.1-4.3 3.2 1.6 5.1-4.3-3.1-4.3 3.1 1.6-5.1L5 8.7l5.3-.1z"/><path d="M4 21h16" opacity=".55"/></svg><span>Sky</span></button>
   <button id="dk-layers" class="dk" type="button" data-sheet="layers" aria-expanded="false" aria-controls="layers-menu" aria-label="Layers" title="Choose what to draw: lines, names, grid, poles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 16l9 5 9-5" opacity=".55"/></svg><span>Layers</span></button>
-  <button id="dk-explain" class="dk" type="button" data-sheet="explain" aria-expanded="false" aria-controls="explainer" aria-label="Why the sky changed" title="Why the sky changed: the explainer and guided journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 7.7v.1"/></svg><span>Why</span></button>
+  <button id="dk-explain" class="dk" type="button" data-act="lessons" aria-expanded="false" aria-controls="lesson" aria-label="Lessons: why the sky changed" title="Lessons: short ideas, shown live in the sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 7.7v.1"/></svg><span>Why</span></button>
 </nav>
 
 <div id="hint" class="panel" hidden>

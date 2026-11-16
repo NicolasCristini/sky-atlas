@@ -47,6 +47,7 @@ export class LabelLayer {
         x = (_p.x * 0.5 + 0.5) * w; y = (-_p.y * 0.5 + 0.5) * h;
         if (x < -30 || x > w + 30 || y < -20 || y > h + 20) vis = false;
       }
+      if (vis && ctx.clip && y - 8 < ctx.clip.b && x + it.w / 2 > ctx.clip.l && x - it.w / 2 < ctx.clip.r) vis = false;   // phones: the status line owns the top strip
       if (vis && it.mag !== undefined && it.mag > ctx.magLimit && !it.force) vis = false;
       if (vis && it.group === 'const') { if (ctx.fov < 26 && ctx.selectedCons !== it.id) op = 0.0, vis = false; }
       if (vis && !it.noCollide) {

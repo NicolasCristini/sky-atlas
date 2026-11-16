@@ -288,7 +288,7 @@ body.journey #right-col { max-height: calc(100dvh - 240px - var(--sat) - var(--s
 .tb-row { flex-wrap: wrap; }
 .cta { bottom: calc(168px + var(--sab)); }
 #mini { left: calc(16px + var(--sal)); bottom: calc(148px + var(--sab)); }
-#travel-hud { left: calc(376px + var(--sal)); right: calc(404px + var(--sar)); top: calc(16px + var(--sat)); }
+#travel-hud { left: calc(376px + var(--sal)); right: calc(452px + var(--sar)); top: calc(16px + var(--sat)); }   /* 452: the toolbar grew by the Lessons button */
 .chips { touch-action: pan-x; }
 #hint { max-height: calc(100dvh - 32px - var(--sat) - var(--sab)); overflow: auto; }
 
@@ -527,3 +527,76 @@ html.land { --dock-r: calc(70px + var(--sar)); --sheet-max: calc(100dvh - var(--
 .land #timebar .tb-meta > .switch { grid-column: 2; grid-row: 2; justify-self: end; }
 .land #timebar .rd-day #utc-input { flex: 1; min-width: 0; width: 100%; max-width: none; }
 .land #timebar { gap: 4px; }
+
+/* ======================= Lessons: a small card over the sky (js/lessonui.js, js/lessons.js) =======================
+   Desktop: top-centre between the observer panel and the toolbar; below the travel HUD while it shows.
+   Phones: a strip above the dock (bottom), or top-centre in landscape; hidden while a sheet or a journey is open. */
+.lsn-btn { padding: 9px 11px; }
+#lesson { position: fixed; top: calc(16px + var(--sat)); left: 376px; right: 404px; display: flex; justify-content: center; z-index: 7; pointer-events: none; transition: top 320ms cubic-bezier(.2, .8, .2, 1); }
+#travel-hud.on ~ #lesson { top: calc(16px + var(--sat) + var(--hud-h, 150px) + 8px); }
+#lesson.under { top: calc(70px + var(--sat)); }
+.lsn { pointer-events: auto; width: 100%; max-width: 420px; padding: 10px 12px 12px; background: rgba(9, 14, 26, .78); animation: lsn-in 240ms cubic-bezier(.2, .8, .2, 1); outline: none; }
+@keyframes lsn-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.lsn.collapsed { width: auto; max-width: 100%; padding: 0; border-radius: 999px; }
+.lsn.collapsed .lsn-full, .lsn:not(.collapsed) .lsn-pill { display: none; }
+.lsn-pill { display: flex; align-items: center; gap: 8px; max-width: 100%; height: 36px; padding: 0 12px 0 12px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--ink-2); font-size: 13px; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.lsn-pill:hover { color: var(--ink); }
+.lsn-pill-t { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.lsn-gem { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(242, 193, 78, .7); flex: none; }
+.lsn-chev { flex: none; color: var(--accent); }
+.lsn-pill.tip { color: var(--ink); border-color: rgba(242, 193, 78, .55); }
+.lsn-pill.pulse { animation: lsn-pulse 1.4s ease-in-out 4; }
+@keyframes lsn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(242, 193, 78, 0); } 50% { box-shadow: 0 0 0 6px rgba(242, 193, 78, .24); } }
+.lsn-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "lab nav" "title nav"; align-items: center; column-gap: 8px; }
+.lsn-lab { grid-area: lab; display: flex; align-items: center; gap: 6px; font-size: 11px; font-variant-caps: all-small-caps; letter-spacing: .12em; color: var(--ink-3); font-weight: 600; text-transform: lowercase; white-space: nowrap; overflow: hidden; }
+.lsn-lab-short { display: none; }
+.lsn-tick { color: var(--accent); flex: none; }
+.lsn-title { grid-area: title; margin: 1px 0 0; font-size: 15px; font-weight: 600; line-height: 1.25; letter-spacing: -.005em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lsn-nav { grid-area: nav; display: flex; gap: 2px; margin-right: -6px; }
+.lsn-ic { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink-2); -webkit-tap-highlight-color: transparent; }
+.lsn-ic:hover { background: rgba(255, 255, 255, .07); color: var(--ink); }
+.lsn-body { margin: 6px 0 9px; font-size: 13px; line-height: 1.4; color: var(--ink-2); min-height: 2.8em; }
+.lsn-body.cap { color: var(--ink); padding-left: 8px; border-left: 2px solid var(--accent); }
+.lsn-ctl { display: flex; align-items: center; gap: 8px; }
+.lsn-go, .lsn-back { height: 30px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: #1b1403; font-weight: 650; font-size: 13px; white-space: nowrap; transition: background var(--t), opacity var(--t); -webkit-tap-highlight-color: transparent; }
+.lsn-go:hover, .lsn-back:hover { background: #ffd36e; }
+.lsn-go.alt { background: rgba(255, 255, 255, .04); color: var(--ink); border-color: var(--line-2); font-weight: 500; }
+.lsn-go.alt:hover { background: rgba(255, 255, 255, .09); }
+.lsn-back:disabled, .lsn-go:disabled { opacity: .55; cursor: default; }
+.lsn-more { height: 30px; padding: 0 6px; border: 0; background: transparent; color: var(--ink-2); font-size: 13px; text-decoration: underline; text-decoration-color: rgba(176, 200, 255, .35); text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
+.lsn-more:hover { color: var(--accent); }
+.lsn-dots { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.lsn-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+.lsn-dots i.seen { background: rgba(242, 193, 78, .5); }
+.lsn-dots i.cur { background: var(--accent); box-shadow: 0 0 0 2px rgba(242, 193, 78, .3); }
+.lsn-tiprow { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 9px !important; }
+
+/* phones */
+@media (pointer: coarse) { .lsn-ic { width: 32px; height: 32px; } .lsn-ic::after, .lsn-more::after { content: ""; position: absolute; inset: -6px; } .lsn-ic, .lsn-more { position: relative; } }
+.phone #lesson { left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); top: auto; bottom: calc(var(--tb-top) + 48px); transition: none; z-index: 10; }
+.phone body.mode-sky #lesson { bottom: calc(var(--tb-top) + 96px); }
+.phone body.sheet-on #lesson, .phone body.journey #lesson { display: none; }
+.phone .lsn { max-width: 520px; padding: 4px 8px 6px 10px; border-radius: 14px; animation-name: dk-in; }
+.phone .lsn.collapsed { padding: 0; border-radius: 999px; }
+.phone .lsn-pill { height: 36px; max-width: calc(100vw - 16px - var(--sal) - var(--sar)); }
+.phone .lsn-head { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "lab title nav"; column-gap: 8px; }
+.phone .lsn-lab { font-size: 10.5px; letter-spacing: .08em; }
+.phone .lsn-lab-long { display: none; }
+.phone .lsn-lab-short { display: inline; font-variant-numeric: tabular-nums; }
+.phone .lsn-title { font-size: 13.5px; margin: 0; }
+.phone .lsn-ic { width: 30px; height: 26px; }
+.phone .lsn-body { margin: 1px 0 4px; font-size: 11.5px; line-height: 1.25; min-height: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.phone .lsn-ctl { gap: 6px; }
+.phone .lsn-go, .phone .lsn-back { height: 27px; padding: 0 12px; font-size: 12.5px; }
+.phone .lsn-more { height: 28px; font-size: 12.5px; }
+.phone .lsn-dots { gap: 3px; }
+.phone .lsn-dots i { width: 5px; height: 5px; }
+/* landscape phone: compact, at the top between the status line and the dock column */
+.land #lesson, .land body.mode-sky #lesson { top: calc(var(--sat) + 8px); bottom: auto; left: calc(336px + var(--sal)); right: calc(var(--dock-r) + 8px); }
+.land .lsn { max-width: 400px; }
+.phone .lsn { padding-bottom: 4px; }
+.phone .lsn-ic { height: 24px; }
+.phone .lsn-go, .phone .lsn-back, .phone .lsn-more { height: 25px; }
+#lesson { align-items: flex-start; }
+.phone #travel-hud.on ~ #lesson { top: auto; }
+.land #travel-hud.on ~ #lesson { top: calc(var(--sat) + 8px); }
