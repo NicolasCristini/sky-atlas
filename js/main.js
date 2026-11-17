@@ -38,6 +38,7 @@ const S = {
   tm: 'day', yd: 0, speedBy: { day: 1, year: 5, ages: 100 },
   ages: { years: 0, baseYear: 2026.9, tween: null, chip: null, fade: 1 },
   q: QUALITY_DEFAULT, expo: EXPOSURE_DEFAULT,
+  arFx: { ground: 1, mw: 1 },   // AR camera passthrough (js/ar/ar.js): 0 hides the ground dome, mw scales the Milky Way
 };
 // preferences: sky quality, star brightness and layer toggles survive reloads (localStorage can be unavailable: always try/catch)
 const PREF_KEY = 'skyatlas.prefs';
@@ -226,15 +227,24 @@ async function init() {
     return lerp(GLOBE_FOV, S.sky.fov, smooth(0.5, 1, u));
   }
   let curFov = -1, curNear = -1;
+  const _arD = new THREE.Vector3(), _arU = new THREE.Vector3();
+  const enuToWorld = (v, out) => out.copy(obsE).multiplyScalar(v[0]).addScaledVector(obsN, v[1]).addScaledVector(obsU, v[2]);
   function updateCamera() {
-    let fov;
+    let fov, arView = false;
     if (S.trans) fov = transitionPose(S.trans.u);
     else if (S.mode === 'globe') { globePose(S.globe, cam.position, cam.quaternion); fov = GLOBE_FOV; }
     else {
-      const d = S.travel && S.travel.skyDir ? S.travel.skyDir : skyDirNormal(SKY_DIR);
-      skyPose(obsU, d, SKY_H, cam.position, cam.quaternion); fov = S.sky.fov;
+      // AR mode (js/ar/ar.js): the phone's orientation drives the camera, roll included; p = { dir:[e,n,u], up:[e,n,u], fov (vertical) }
+      const p = !S.travel && hooks.arPose ? hooks.arPose() : null;
+      if (p) {
+        cam.position.copy(obsU).multiplyScalar(1 + SKY_H);
+        basisQuat(enuToWorld(p.dir, _arD), enuToWorld(p.up, _arU), cam.quaternion); fov = p.fov; arView = true;
+      } else {
+        const d = S.travel && S.travel.skyDir ? S.travel.skyDir : skyDirNormal(SKY_DIR);
+        skyPose(obsU, d, SKY_H, cam.position, cam.quaternion); fov = S.sky.fov;
+      }
     }
-    if (W < H) fov = 2 * Math.atan(Math.tan(fov * DEG / 2) * Math.pow(W / H, -0.6)) / DEG;   // portrait: keep the horizontal view usable
+    if (W < H && !arView) fov = 2 * Math.atan(Math.tan(fov * DEG / 2) * Math.pow(W / H, -0.6)) / DEG;   // portrait: keep the horizontal view usable
     const h = cam.position.length() - 1;
     const near = clamp(h * 0.3, 2e-5, 0.05);
     if (fov !== curFov || Math.abs(near - curNear) > curNear * 0.05) { cam.fov = fov; cam.near = near; cam.updateProjectionMatrix(); curFov = fov; curNear = near; }
@@ -802,7 +812,7 @@ async function init() {
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ }
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     S.globe.auto = false; S.intro = null; hideHint();
-    if (ptrs.size === 1) { gest = { moved: 0, t0: performance.now(), x: e.clientX, y: e.clientY, last: performance.now() }; S.globe.vLon = S.globe.vLat = 0; S.sky.vAz = S.sky.vAlt = 0; S.slew = null; }
+    if (ptrs.size === 1) { gest = { moved: 0, t0: performance.now(), x: e.clientX, y: e.clientY, last: performance.now() }; S.globe.vLon = S.globe.vLat = 0; S.sky.vAz = S.sky.vAlt = 0; S.slew = null; if (hooks.arGrab) hooks.arGrab(true); }
     else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); fov0 = S.sky.fov; dist0 = S.globe.dist; gest && (gest.moved = 99); }
   });
   canvas.addEventListener('pointermove', (e) => {
@@ -822,6 +832,8 @@ async function init() {
       const k = RAD * 2 * Math.tan(cam.fov * DEG / 2) * (S.globe.dist - 1) / H;
       S.globe.lon -= dx * k; S.globe.lat = clamp(S.globe.lat + dy * k, -85, 85);
       S.globe.vLon = lerp(S.globe.vLon, (-dx * k) / dt, 0.35); S.globe.vLat = lerp(S.globe.vLat, (dy * k) / dt, 0.35);
+    } else if (hooks.arDrag && hooks.arDrag(dx * cam.fov / H, dy * cam.fov / H)) {
+      // AR mode: a drag nudges the view away from the sensors; it springs back on release (js/ar/ar.js)
     } else {
       const k = cam.fov / H, s = S.sky;
       const dAz = -dx * k / Math.max(0.35, Math.cos(clamp(s.alt, -80, 80) * DEG)), dAlt = dy * k;
@@ -832,6 +844,7 @@ async function init() {
   const endPtr = (e) => {
     const had = ptrs.delete(e.pointerId);
     if (!had) return;
+    if (ptrs.size === 0 && hooks.arGrab) hooks.arGrab(false);
     if (gest && ptrs.size === 0) {
       if (performance.now() - gest.last > 90) { S.globe.vLon = S.globe.vLat = S.sky.vAz = S.sky.vAlt = 0; }
       if (e.type === 'pointerup' && gest.moved < 6 && performance.now() - gest.t0 < 700 && !busy()) onClick(e.clientX, e.clientY);
@@ -973,7 +986,7 @@ async function init() {
     su.uLimit.value = qp.limit; su.uGain.value = lerp(1.15, qp.gain, land); su.uExp.value = S.expo; su.uPol.value = qp.pol; su.uLand.value = land;
     _up.copy(obsU).applyMatrix4(rotInv); su.uUp.value.copy(_up);
     dome.u.uPol.value = qp.pol;
-    const mwV = lerp(1, qp.mw, land);
+    const mwV = lerp(1, qp.mw, land) * S.arFx.mw;
     sky.mw.material.uniforms.uThr.value = (1 - Math.min(1, mwV)) * 0.3;
     sky.dsoMat.opacity = 0.55 * lerp(1, smooth(3.4, 5.4, qp.limit), land);
     // sun-based sky colour and star fade
@@ -991,7 +1004,7 @@ async function init() {
     dome.u.uSunL.value.copy(_sunL); dome.u.uSunTw.value = tw; dome.u.uSkyA.value = skyA; dome.u.uGround.value = land;
     dome.u.uGlow.value = lay.daylight ? 0.5 : 0.3;
     dome.u.uGlowCol.value.set(0.28 + 0.6 * tw, 0.42 + 0.1 * tw, 0.72 - 0.3 * tw);
-    dome.mesh.visible = land > 0.003; rig.group.visible = land > 0.3;
+    dome.mesh.visible = land > 0.003 && S.arFx.ground > 0.5; rig.group.visible = land > 0.3;
     // fov-dependent star size
     const fovS = S.mode === 'sky' || S.trans ? clamp(1 + (60 - cam.fov) / 120, 0.82, 1.4) : 1;
     sky.uniforms.uScale.value = fovS;
@@ -1050,6 +1063,7 @@ async function init() {
     altAzOfEq, centreOnSelection, onClick, closeCard, scene, lblCtx, PX, setObserver, labels, renderer, get sunWorld() { return sunWorld; },
     setTimeMode, goEpoch, setYears, lookAtPole, get precP() { return precP; }, get pole() { return pole; }, syncSkyUI, savePrefs, poleStarHTML,
     hooks, syncPlay, syncKeep, setLocalSolar, syncEpochs, updateTimeUI, refreshLive, setExplainer,
+    dome, rig, get W() { return W; }, get H() { return H; },
   };
   try { initLessons(window.__atlas); } catch (e) { console.error('lessons', e); }
 }

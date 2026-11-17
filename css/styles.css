@@ -756,3 +756,85 @@ body.learn-nopolelbl .lbl.polemark { visibility: hidden; }
 .land .lh-go { width: auto; height: 38px; }
 .land .lh-foot { padding-top: 6px; padding-bottom: calc(6px + var(--sab)); }
 .land .lh-link { height: 36px; }
+
+/* ======================= AR "point at the sky" mode (js/ar/ar.js) =======================
+   body.ar-on: the dock, sheets and side panels step aside (visibility, not display, so --tb-top / --hdr-b keep measuring the dock and the status line).
+   html.ar-night: a red multiply veil keeps only the red channel of everything below it. */
+#ar-bar, #ar-acc, #ar-toast, #ar-fig8, #ar-cal, #ar-intro, #ar-night { display: none; }
+#ar-night { position: fixed; inset: 0; background: #ff1a00; mix-blend-mode: multiply; pointer-events: none; z-index: 2147483000; }
+html.ar-night #ar-night { display: block; }
+
+body.ar-on #dock, body.ar-on #time-pill, body.ar-on #mini, body.ar-on #look-up, body.ar-on #toolbar, body.ar-on #place, body.ar-on #timebar,
+body.ar-on #explainer, body.ar-on .menu, body.ar-on #hint, body.ar-on #ios-hint, body.ar-on #lesson, body.ar-on #learn, body.ar-on #lcard,
+body.ar-on #caption, body.ar-on #left-col > :not(#card) { visibility: hidden; pointer-events: none; }
+body.ar-on #status .st-btn { pointer-events: none; }
+
+/* the AR bar: same glass and geometry as the dock */
+body.ar-on #ar-bar { display: flex; position: fixed; z-index: 14; left: 50%; bottom: calc(16px + var(--sab)); width: min(380px, calc(100vw - 24px - var(--sal) - var(--sar))); height: 56px; padding: 4px 6px; transform: translateX(-50%); align-items: center; justify-content: space-around; border-radius: 22px; background: rgba(8, 12, 24, .2); border: 1px solid rgba(176, 200, 255, .12); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); animation: dk-in 220ms cubic-bezier(.2, .8, .2, 1); }
+html.phone body.ar-on #ar-bar { left: calc(12px + var(--sal)); right: calc(12px + var(--sar)); bottom: calc(8px + var(--sab)); width: auto; transform: none; }
+html.land body.ar-on #ar-bar { top: 50%; bottom: auto; left: auto; right: calc(6px + var(--sar)); width: 56px; height: auto; transform: translateY(-50%); flex-direction: column; justify-content: center; gap: 2px; padding: 6px 4px; border-radius: 20px; }
+#ar-bar .dk { flex: 1 1 0; max-width: 88px; }
+.land #ar-bar .dk { flex: none; width: 48px; height: 46px; min-width: 0; }
+.land #dock .dk { height: 42px; }   /* seven buttons in a column at 390 px tall */
+.ar-badge { position: absolute; top: 7px; left: calc(50% + 9px); width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); box-shadow: 0 0 0 1.5px rgba(8, 12, 24, .8); pointer-events: none; }
+#ar-bar[data-acc="good"] .ar-badge { background: #7fd18b; }
+#ar-bar[data-acc="fair"] .ar-badge { background: var(--accent); }
+#ar-bar[data-acc="poor"] .ar-badge { background: #ff7a59; }
+
+/* accuracy chip under the status line */
+#ar-acc:not([hidden]) { display: inline-flex; }
+#ar-acc { position: fixed; z-index: 8; left: 50%; top: calc(16px + var(--sat)); transform: translateX(-50%); align-items: center; gap: 8px; min-height: 30px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(9, 14, 26, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--ink-2); font-size: 12.5px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); -webkit-tap-highlight-color: transparent; }
+#ar-acc::after { content: ""; position: absolute; inset: -8px -6px; }
+.phone #ar-acc { top: calc(var(--hdr-b) + 6px); }
+.ar-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
+#ar-acc[data-acc="good"] .ar-dot { background: #7fd18b; box-shadow: 0 0 8px rgba(127, 209, 139, .6); }
+#ar-acc[data-acc="fair"] .ar-dot { background: var(--accent); box-shadow: 0 0 8px rgba(242, 193, 78, .5); }
+#ar-acc[data-acc="poor"] .ar-dot { background: #ff7a59; box-shadow: 0 0 8px rgba(255, 122, 89, .6); }
+#ar-acc[data-acc="poor"] { color: var(--ink); }
+
+/* toast and figure-8 hint */
+#ar-toast:not([hidden]), #ar-fig8:not([hidden]) { display: block; }
+#ar-toast { position: fixed; z-index: 9; left: 50%; top: calc(16px + var(--sat) + 4px); transform: translateX(-50%); width: fit-content; max-width: min(360px, calc(100vw - 24px)); padding: 10px 14px; font-size: 13px; line-height: 1.35; color: var(--ink); text-align: center; background: var(--panel-solid); pointer-events: none; }
+.phone #ar-toast { top: calc(var(--hdr-b) + 6px); }
+body.ar-live #ar-toast { top: calc(16px + var(--sat) + 44px); }
+html.phone body.ar-live #ar-toast { top: calc(var(--hdr-b) + 44px); }
+#ar-fig8:not([hidden]) { display: flex; }
+#ar-fig8 { position: fixed; z-index: 9; left: 50%; top: calc(16px + var(--sat) + 84px); transform: translateX(-50%); width: min(340px, calc(100vw - 24px)); align-items: center; gap: 10px; padding: 8px 6px 8px 12px; background: var(--panel-solid); font-size: 13px; line-height: 1.35; color: var(--ink-2); }
+html.phone #ar-fig8 { top: calc(var(--hdr-b) + 84px); }
+#ar-fig8 svg { flex: none; }
+#ar-fig8 span { flex: 1; min-width: 0; }
+
+/* intro, styled like the welcome hint */
+#ar-intro:not([hidden]) { display: block; }
+#ar-intro { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; padding: 24px; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px - var(--sat) - var(--sab)); overflow: auto; background: var(--panel-solid); }
+#ar-intro ul { margin: 12px 0 16px; padding-left: 20px; color: var(--ink-2); }
+#ar-intro li { margin: 8px 0; }
+#ar-intro b { color: var(--ink); }
+.ar-intro-btns { display: flex; gap: 8px; }
+.ar-intro-btns .btn { min-height: 44px; padding: 7px 18px; }
+
+/* calibration sheet: floating panel above the bar (tablet, desktop); a bottom sheet on phones; a side panel in landscape */
+#ar-cal:not([hidden]) { display: block; }
+#ar-cal { position: fixed; z-index: 15; left: 50%; bottom: calc(88px + var(--sab)); transform: translateX(-50%); width: min(380px, calc(100vw - 24px - var(--sal) - var(--sar))); max-height: calc(100dvh - 120px - var(--sat) - var(--sab)); overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px 12px; background: var(--panel-solid); }
+.phone #ar-cal { left: calc(8px + var(--sal)); right: calc(8px + var(--sar)); width: auto; transform: none; bottom: calc(var(--tb-top) + 8px); max-height: var(--sheet-max); padding: 22px 16px 12px; animation: dk-in 220ms cubic-bezier(.2, .8, .2, 1); }
+.phone #ar-cal::before { content: ""; position: absolute; left: 50%; top: 7px; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: rgba(176, 200, 255, .34); pointer-events: none; }
+.land #ar-cal { left: auto; right: var(--dock-r); width: min(340px, calc(100vw - 280px - var(--dock-r))); bottom: calc(var(--sab) + 8px); }
+.arc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.phone .arc-head { position: absolute; right: 8px; top: 8px; margin: 0; }
+.phone .arc-head .eyebrow { display: none; }
+.arc-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; }
+.arc-row .k { color: var(--ink-3); font-size: 12.5px; flex: none; }
+.arc-row .v { color: var(--ink); font-size: 13px; text-align: right; }
+.arc-nudge { display: inline-flex; align-items: center; gap: 6px; }
+.arc-nudge .btn { min-height: 40px; min-width: 44px; padding: 6px 10px; }
+.arc-nudge b { min-width: 58px; text-align: center; font-weight: 600; color: var(--accent); }
+#ar-strip { position: relative; height: 36px; margin: 2px 0 8px; border: 1px solid var(--line-2); border-radius: 10px; background-color: rgba(255, 255, 255, .03);
+  background-image: linear-gradient(90deg, rgba(176, 200, 255, .55) 0 1px, transparent 1px), linear-gradient(90deg, rgba(176, 200, 255, .3) 0 1px, transparent 1px);
+  background-size: 30px 55%, 6px 28%; background-repeat: repeat-x; background-position: 0 100%; touch-action: none; cursor: ew-resize; overflow: hidden; }
+#ar-strip::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); box-shadow: 0 0 8px rgba(242, 193, 78, .6); pointer-events: none; }
+#ar-strip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.arc-cam { margin-top: 6px; border-top: 1px solid var(--line); }
+.arc-slider { gap: 14px; }
+.arc-slider input { flex: 1; min-width: 0; width: auto; }
+.arc-info { display: grid; gap: 6px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+#ar-cal .sm-note { margin-bottom: 2px; }
