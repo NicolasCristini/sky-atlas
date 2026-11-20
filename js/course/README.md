@@ -75,13 +75,15 @@ Gold is the active construction, pale blue the reference. Everything has a draw-
 | `ov.altArc(az, from, to)` / `ov.azArc(alt, from, to)` | arcs on the horizon frame |
 | `ov.marker(p, { text, pulse })` / `ov.text(p, str)` | ring, label attached to a sky position |
 | `ov.trail(p, { since, tickHours, tickLabel })` | the path a star has drawn since a time |
+| `ov.path(points, { upTo, tail, color })` | a track of `{ra, dec}` points that follows the stars (Mars's loop, the pole's circle, a star's proper motion); `upTo` (0..1 or a function) reveals it as time runs |
+| `ov.screen((ctx, env) => ...)` | a flat diagram in screen space, redrawn every frame (`js/course/diagrams.js`: Moon inset, Venus chart, eclipse chart) |
 | `ov.gline(a, b, opts)`, `ov.garc(a, b, r, { center })`, `ov.gmarker(p, opts)` | **globe mode** (lesson 4.3): points are world positions of the unit Earth (`ov.geo(lat, lon, k)`; `ov.sunDir()` is the Sun's direction); only drawn while the globe shows |
 | `ov.clear()` | everything (done for you when a step ends) |
 
 ## 4. The Try step: checkers (`js/course/checks.js`)
 
 `facing({az, alt, tol})`, `selected(hip | predicate)`, `timeAdvanced({hours, tol})` (shows a -1 h / +1 h control), `objectAltitude(id, {min, max})`,
-`latitudeBetween(a, b)` (shows a latitude slider), `custom(..., { controls: 'year' })` (a slider through the year, with `X.yearAt(21)` in `trySetup`), `{ controls: 'days' }` (Earlier / Next dawn buttons, `stepDays(X, d)` on the lesson), `choice({options(X), correct(X)})` (options are `{id, label, text}`), `sequence([...])` (prompts `try.prompt`, `try.prompt2` ...),
+`latitudeBetween(a, b)` (shows a latitude slider), `custom(..., { controls: 'year' })` (a slider through the year, with `X.yearAt(21)` in `trySetup`), `{ controls: 'days' }` (Earlier / Next dawn buttons, `stepDays(X, d)` on the lesson; `dayKeys: ['dayPrev', 'dayNext']` on the lesson renames them), `{ controls: 'ages' }` (a slider through the ages in Ages mode: `X.D.timeMode('ages')`, `a.setYears(...)`), `choice({options(X), correct(X)})` (options are `{id, label, text}`), `sequence([...])` (prompts `try.prompt`, `try.prompt2` ...),
 `custom((X) => boolean, { controls: 'scrub', show })`. "Show me how" runs the checker's `show(X)` in the demo runner; the player then marks the step done.
 `checker.keys = () => ({ prompt, hint, success })` swaps in other text keys (see 2.2 for a sky-dependent Try).
 

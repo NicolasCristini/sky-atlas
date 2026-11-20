@@ -240,6 +240,7 @@ export default [
       c.show = base.show;
       return c;
     })(),
+    hideLabels: ['Pleiades', HIP.alcyone],
     async trySetup(X) {
       const { D, S } = X, lat = S.obs.lat, lon = S.obs.lon, star = X.star(HIP.alcyone);
       await D.prep();

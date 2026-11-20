@@ -983,7 +983,7 @@ async function init() {
     const lay = S.layers;
     // sky quality: limiting magnitude, gain, Milky Way, sky glow (only when landed; the globe-mode backdrop shows every star)
     const qp = qualityParams(S.q), su = sky.uniforms;
-    su.uLimit.value = qp.limit; su.uGain.value = lerp(1.15, qp.gain, land); su.uExp.value = S.expo; su.uPol.value = qp.pol; su.uLand.value = land;
+    su.uLimit.value = S.limOv ?? qp.limit; su.uGain.value = lerp(1.15, qp.gain, land); su.uExp.value = S.expo; su.uPol.value = qp.pol; su.uLand.value = land;
     _up.copy(obsU).applyMatrix4(rotInv); su.uUp.value.copy(_up);
     dome.u.uPol.value = qp.pol;
     const mwV = lerp(1, qp.mw, land) * S.arFx.mw;
@@ -1027,7 +1027,7 @@ async function init() {
     // labels
     const landed = land > 0.5;
     const magFov = cam.fov > 85 ? 1.7 : cam.fov > 60 ? 2.3 : cam.fov > 40 ? 2.9 : 3.5;
-    const mag = Math.min(magFov, qp.limit - 0.25);        // never label a star the sky quality hides
+    const mag = Math.min(magFov, (S.limOv ?? qp.limit) - 0.25);        // never label a star the sky quality hides
     const bodiesOn = S.ages.fade > 0.5;
     const on = lblCtx.on;
     on.const = lay.constNames && landed; on.star = lay.starNames && landed; on.dso = lay.starNames && landed && qp.limit > 4.4; on.planet = lay.planets && landed && bodiesOn; on.sunmoon = landed; on.moon = landed && bodiesOn;

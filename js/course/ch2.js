@@ -87,8 +87,10 @@ export default [
       c.keys = () => ({ prompt: 'try.promptS', hint: 'try.hintS', success: 'try.successS' });
       return c;
     },
+    hideLabels: [11767],
     async trySetup(X) {
       const lat = X.S.obs.lat, a = Math.abs(lat);
+      X.noPoleLabel();                                       // the pole label marks the answer
       await X.D.prep();
       await X.D.toSky(lat >= 10 ? 0 : poleAz(lat), clamp(a + 10, 25, 60), 90);
     },

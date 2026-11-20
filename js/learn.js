@@ -5,6 +5,8 @@ import { loadCourse } from './course/text.js';
 import { CHAPTERS } from './course/index.js';
 import { createOverlay } from './course/overlay.js';
 import { createKit } from './course/kit.js';
+import { SLIDER_MAX, sliderToYears, yearsToSlider, formatYear } from './ages.js';
+import { attachNight } from './course/nightsky.js';
 
 const $ = (s) => document.querySelector(s);
 const body = document.body, root = document.documentElement;
@@ -31,6 +33,7 @@ async function boot(a, engine) {
   const ov = createOverlay(a);
   const K = createKit(a, engine, ov, () => course), ui = K.ui;
   course = await loadCourse('en');
+  attachNight(K, a, engine);   // red night mode, "keep this setting", per-step cleanups (chapters 7 and 8)
 
   // ---------------------------------------------------------------- progress (localStorage, always try/catch)
   let prog = { v: 1, done: {}, steps: {}, last: null };
@@ -162,7 +165,7 @@ async function boot(a, engine) {
   // player state
   const P = { active: false, starting: false, def: null, ch: null, X: null, step: 0, token: 0, tryDone: false, tryShown: false, finished: false, watching: false, chk: null, poll: 0, okSince: 0, hintTimer: 0, wrongKey: '', opts: null, picked: new Set(), caption: '', textMode: '' };
 
-  function setText(t, mode = '') { P.caption = t; P.textMode = mode; if (el.text.textContent !== t) el.text.textContent = t; el.text.classList.toggle('cap', mode === 'cap'); }
+  function setText(t, mode = '') { P.caption = t; P.textMode = mode; if (el.text.textContent !== t) el.text.textContent = t; el.text.classList.toggle('cap', mode === 'cap'); el.text.classList.toggle('wrong', mode === 'wrong'); }
   function setNote(t, cls = '') { el.note.textContent = t || ''; el.note.className = 'lc-note' + (cls ? ' ' + cls : ''); el.note.hidden = !t; }
   const keysOf = () => (P.chk && P.chk.keys ? P.chk.keys(P.X) : null) || { prompt: 'try.prompt', hint: 'try.hint', success: 'try.success' };
 
@@ -195,15 +198,28 @@ async function boot(a, engine) {
   const nextLessonAfter = (id) => { const l = lessonList(), i = l.findIndex((x) => x.def.id === id); return i >= 0 && i + 1 < l.length ? l[i + 1] : null; };
 
   // ---------------------------------------------------------------- steps
+  /** Try steps must not hand over the answer: the pole marker's "pole star: ..." line and the name labels of the stars the Try declares (hideLabels: [HIP...]) are hidden until the step ends or is solved. */
+  let hiddenLbls = [];
+  function hideAnswerLabels(def, chk, x) {
+    body.classList.add('learn-nopolestar');
+    const list = [def.hideLabels, chk && chk.hideLabels].flatMap((h) => (typeof h === 'function' ? h(x) : h) || []);
+    const items = (a.labels && a.labels.items) || [];
+    for (const key of list) {                                  // a HIP number hides a star's name; a string hides any label with that text (a cluster, a planet)
+      const i = typeof key === 'number' ? a.data.hipIndex.get(key) : -1;
+      for (const it of items) if ((typeof key === 'number' && it.si === i && it.group === 'star') || (typeof key === 'string' && it.text === key)) { it.hidden = true; hiddenLbls.push(it); }
+    }
+  }
+  function showAnswerLabels() { body.classList.remove('learn-nopolestar'); for (const it of hiddenLbls) it.hidden = false; hiddenLbls = []; }
   function endStep() {
+    showAnswerLabels(); card.classList.remove('choice'); clearTimeout(P.wrongTimer);
     clearInterval(P.poll); clearTimeout(P.hintTimer); P.poll = 0; P.okSince = 0;
-    engine.stop(); ov.clear(); body.classList.remove('learn-nopolelbl'); P.watching = false; P.chk = null; P.opts = null; P.picked = new Set(); P.wrongKey = '';
+    engine.stop(); ov.clear(); body.classList.remove('learn-nopolelbl'); (K.cleanups || []).splice(0).forEach((f) => { try { f(); } catch (e) { console.error(e); } }); P.watching = false; P.chk = null; P.opts = null; P.picked = new Set(); P.wrongKey = '';
     el.opts.innerHTML = ''; el.opts.hidden = true; el.tool.hidden = true; el.tool.innerHTML = '';
     setNote('');
   }
   function setStep(i) {
     endStep();
-    P.step = i; const tok = ++P.token; P.tryDone = false; P.tryShown = false;
+    P.step = i; const tok = ++P.token; P.tryDone = false; P.tryShown = false; P.ready = false;
     setText(''); renderCard();
     [runWatch, runTry, runOld, runTonight][i](tok);
   }
@@ -233,7 +249,8 @@ async function boot(a, engine) {
     const x = X(), def = P.def;
     P.chk = typeof def.try === 'function' ? def.try(x) : def.try;
     if (P.chk.reset) P.chk.reset(x);
-    x.stageChanged = (k) => { if (tok !== P.token) return; P.wrongKey = ''; renderTry(); };
+    hideAnswerLabels(def, P.chk, x);
+    x.stageChanged = (k) => { if (tok !== P.token) return; P.wrongKey = ''; setNote(''); renderTry(); };
     x.tryT0 = S.time; renderTry(); setNote('');
     await engine.runScript(async (d) => {
       await homeAndClock(true);
@@ -241,14 +258,17 @@ async function boot(a, engine) {
     }, { onCaption: () => {} });
     if (tok !== P.token) return;
     x.tryT0 = S.time; x.justShown = false; a.select(null);
-    renderTool();
+    P.ready = true; renderTry();
     P.hintTimer = setTimeout(() => { if (tok === P.token && !P.tryDone) setNote(`${ui('hintLead')} ${x.T(keysOf().hint)}`, 'hint'); }, 22000);
     if (P.chk.kind === 'choice') return;
     P.poll = setInterval(() => { if (tok === P.token) pollTry(tok); }, 130);
   }
   function renderTry() {
     const x = X(), k = keysOf();
-    setText(x.T(k.prompt), ''); renderTool();
+    setText(x.T(k.prompt), '');
+    card.classList.toggle('choice', P.chk.kind === 'choice');
+    if (!P.ready) return;                  // the options and controls wait until the sky is set up (a tap during the set-up would act on a sky that is still moving)
+    renderTool();
     if (P.chk.kind === 'choice') {
       if (!P.opts) P.opts = P.chk.options(x);
       el.opts.hidden = false;
@@ -272,14 +292,14 @@ async function boot(a, engine) {
   function tryOk(tok, shown) {
     if (tok !== P.token || P.tryDone) return;
     clearInterval(P.poll); clearTimeout(P.hintTimer);
-    P.tryDone = true; P.tryShown = !!shown;
-    markStep(P.def.id, 1);
+    P.tryDone = true; P.tryShown = !!shown; showAnswerLabels();
+    markStep(P.def.id, 1); renderTool();
     setText(X().T(keysOf().success), 'ok'); setNote(shown ? ui('shownLine') : '', shown ? 'hint' : '');
     el.opts.querySelectorAll('.lc-opt').forEach((b) => { b.disabled = true; });
     renderControls();
   }
   async function showMe() {
-    const tok = P.token, x = X(), chk = P.chk; if (!chk || P.tryDone) return;
+    const tok = P.token, x = X(), chk = P.chk; if (!chk || P.tryDone || !P.ready) return;
     clearInterval(P.poll); clearTimeout(P.hintTimer); P.poll = 0; P.okSince = 0; setNote('');
     const ok = await engine.runScript(async () => { await chk.show(x); }, { onCaption: () => {} });
     if (tok !== P.token) return;
@@ -290,23 +310,34 @@ async function boot(a, engine) {
     const b = e.target.closest('[data-opt]'); if (!b || !P.chk || P.tryDone) return;
     const id = P.opts.find((o) => String(o.id) === b.dataset.opt).id, r = P.chk.answer(X(), id);
     if (r === true) { b.classList.add('right'); tryOk(P.token); }
-    else { P.picked.add(String(id)); b.disabled = true; b.classList.add('wrong'); setNote(X().T('try.wrong', (r && r.vars) || {}), 'wrong'); }
+    else {
+      P.picked.add(String(id)); b.disabled = true; b.classList.add('wrong');
+      // the feedback takes the place of the question for a few seconds, so the options never slide out of sight
+      const tok = P.token; setText(X().T('try.wrong', (r && r.vars) || {}), 'wrong');
+      clearTimeout(P.wrongTimer); P.wrongTimer = setTimeout(() => { if (tok === P.token && !P.tryDone) setText(X().T(keysOf().prompt), ''); }, 4500);
+    }
   });
 
   // the small controls a Try step may ask for (checker.controls)
   const fmtH = (h) => { const r = Math.round(h * 10) / 10, s = r > 0 ? '+' : r < 0 ? '−' : ''; return ui('hoursShown', { hours: s + Math.abs(r).toFixed(Math.abs(r) % 1 ? 1 : 0) }); };
+  /** A checker may bring its own small control: chk.tool before success, chk.keepTool after it ({ html(X), sync(X, el), onAct(X, act, btn), onInput(X, value) }). */
+  const toolSpec = () => (P.chk ? (P.tryDone ? P.chk.keepTool : P.chk.tool) || null : null);
   function renderTool() {
-    const c = P.chk && P.chk.controls, t = el.tool;
+    const spec = toolSpec(), t = el.tool;
+    if (spec) { t.hidden = false; t.dataset.kind = 'spec'; t.innerHTML = spec.html(X()); syncTool(); return; }
+    const c = P.chk && P.chk.controls;
     if (!c) { t.hidden = true; t.innerHTML = ''; return; }
     t.hidden = false; t.dataset.kind = c;
     if (c === 'hours') t.innerHTML = `<button type="button" class="lc-step-b" data-t="-1">${esc(ui('minusHour'))}</button><output class="lc-val num">${fmtH(0)}</output><button type="button" class="lc-step-b" data-t="1">${esc(ui('plusHour'))}</button>`;
     else if (c === 'scrub') t.innerHTML = `<label class="lc-lab2">${esc(ui('scrubLabel'))}</label><input type="range" min="-720" max="720" step="5" value="0" aria-label="${esc(ui('scrubLabel'))}"><output class="lc-val num">${fmtH(0)}</output>`;
     else if (c === 'lat') t.innerHTML = `<label class="lc-lab2">${esc(ui('latLabel'))}</label><input type="range" min="-90" max="90" step="0.5" value="${S.obs.lat.toFixed(1)}" aria-label="${esc(ui('latLabel'))}"><output class="lc-val num"></output>`;
     else if (c === 'year') t.innerHTML = `<label class="lc-lab2">${esc(ui('yearLabel'))}</label><input type="range" min="-183" max="183" step="1" value="${Math.round(S.yd)}" aria-label="${esc(ui('yearLabel'))}"><output class="lc-val num"></output>`;
-    else if (c === 'days') t.innerHTML = `<button type="button" class="lc-step-b" data-d="-1">${esc(ui('prevDawn'))}</button><output class="lc-val num"></output><button type="button" class="lc-step-b" data-d="1">${esc(ui('nextDawn'))}</button>`;
+    else if (c === 'days') t.innerHTML = `<button type="button" class="lc-step-b" data-d="-1">${esc(ui((P.def && P.def.dayKeys || [])[0] || 'prevDawn'))}</button><output class="lc-val num"></output><button type="button" class="lc-step-b" data-d="1">${esc(ui((P.def && P.def.dayKeys || [])[1] || 'nextDawn'))}</button>`;
+    else if (c === 'ages') t.innerHTML = `<label class="lc-lab2">${esc(ui('agesLabel'))}</label><input type="range" min="${-SLIDER_MAX}" max="${SLIDER_MAX}" step="1" value="${Math.round(yearsToSlider(S.ages.years))}" aria-label="${esc(ui('agesLabel'))}"><output class="lc-val num"></output>`;
     syncTool();
   }
   function syncTool() {
+    const spec = toolSpec(); if (spec) { if (spec.sync && !el.tool.hidden) spec.sync(X(), el.tool); return; }
     const c = P.chk && P.chk.controls, t = el.tool; if (!c || t.hidden || t.dataset.kind !== c) return;
     const out = t.querySelector('output'), inp = t.querySelector('input'), x = X();
     const dh = (S.time - (x.tryT0 || S.time)) / 3600e3;
@@ -314,14 +345,17 @@ async function boot(a, engine) {
     else if (c === 'scrub') { out.textContent = fmtH(dh); if (document.activeElement !== inp) inp.value = String(Math.max(-720, Math.min(720, Math.round(dh * 12) * 5))); }
     else if (c === 'year') { out.textContent = x.dateNow(); if (document.activeElement !== inp) inp.value = String(Math.max(-183, Math.min(183, Math.round(S.yd)))); }
     else if (c === 'days') out.textContent = K.dateText(S.time, S.obs.lon);
+    else if (c === 'ages') { out.textContent = formatYear(S.ages.baseYear + S.ages.years).text; if (document.activeElement !== inp) inp.value = String(Math.round(yearsToSlider(S.ages.years))); }
     else { out.textContent = `${Math.abs(S.obs.lat).toFixed(1)}°${S.obs.lat >= 0 ? 'N' : 'S'}`; if (document.activeElement !== inp) inp.value = S.obs.lat.toFixed(1); }
   }
   const setTime = (ms) => { S.playing = false; a.syncPlay(); S.time = ms; S.anchor = ms; a.updateCelestial(true); };
-  el.tool.addEventListener('click', (e) => { const b = e.target.closest('[data-t],[data-d]'); if (!b) return; if (b.dataset.d && P.def && P.def.stepDays) P.def.stepDays(X(), +b.dataset.d); else setTime(S.time + (b.dataset.d ? (+b.dataset.d) * 864e5 : (+b.dataset.t) * 3600e3)); syncTool(); });
+  el.tool.addEventListener('click', (e) => { const sp = toolSpec(); if (sp) { const sb = e.target.closest('[data-act]'); if (sb && sp.onAct) { sp.onAct(X(), sb.dataset.act, sb); syncTool(); } return; } const b = e.target.closest('[data-t],[data-d]'); if (!b) return; if (b.dataset.d && P.def && P.def.stepDays) P.def.stepDays(X(), +b.dataset.d); else setTime(S.time + (b.dataset.d ? (+b.dataset.d) * 864e5 : (+b.dataset.t) * 3600e3)); syncTool(); });
   el.tool.addEventListener('input', (e) => {
     const inp = e.target.closest('input'); if (!inp) return;
+    const sp = toolSpec(); if (sp) { if (sp.onInput) sp.onInput(X(), inp.value); syncTool(); return; }
     if (el.tool.dataset.kind === 'scrub') setTime(X().tryT0 + (+inp.value) * 60e3);
     else if (el.tool.dataset.kind === 'year') { S.playing = false; a.syncPlay(); X().setYd(+inp.value); }
+    else if (el.tool.dataset.kind === 'ages') { S.playing = false; a.syncPlay(); a.setYears(sliderToYears(+inp.value), true); }
     else if (el.tool.dataset.kind === 'lat') a.placeInstant({ lat: +inp.value, lon: S.obs.lon });
     syncTool();
   });
@@ -360,7 +394,7 @@ async function boot(a, engine) {
     if (!P.active) return;
     const ch = P.ch; P.token++; endStep();
     card.hidden = true; P.active = false; body.classList.remove('learn-play'); applyViewOffset(true);
-    try { await engine.end({ instant: true }); } catch (e) { console.error(e); }
+    try { if (K.beforeExit) await K.beforeExit(); await engine.end({ instant: true }); } catch (e) { console.error(e); }
     K.awayName = '';
     if (toHome) openHome({ chapter: ch ? ch.id : null }); else { body.classList.remove('learn-on'); }
   }

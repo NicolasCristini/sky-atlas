@@ -169,6 +169,156 @@ poleDown: sinks
 
 pleiades: The Pleiades
 
+<!-- ch7-8 -->
+
+tempLabel: {name}: about {a} K
+
+lyLabel: {a} light-years
+
+illustration: Deneb at Vega's distance (an illustration)
+
+yearsAgo: {n} years ago
+
+yearsAgoAbout: about {n} years ago
+
+millionYearsAgo: {n} million years ago
+
+whenCE: around the year {n}
+
+whenBC: around {n} BC
+
+fromTo: {a} to {b}
+
+fromToLong: from {a} to {b}
+
+onDate: on {a}
+
+andBest: Look for it in the evening from {a}.
+
+andNever: It never rises high enough from {place}.
+
+galacticCentre: Galactic Centre
+
+greatRift: Great Rift
+
+coalsack: Coalsack
+
+overhead: almost straight overhead
+
+emuHead: The Emu's head (the Coalsack)
+
+skyQuality: Sky quality
+
+thatsMySky: That's my sky
+
+starsLabel: About {count} stars
+
+adaptLabel: Minute {a}
+
+adaptLabel2: Stars to magnitude {b}: about {count}
+
+redMode: Red night mode
+
+redModeNote: Turns everything red, so your eyes stay used to the dark.
+
+redModeOn: Red night mode: on
+
+redModeOff: Red night mode: off
+
+keepSetting: Keep this setting
+
+keepRed: Keep red mode on
+
+keptSetting: Kept: it stays after the lesson
+
+km: {n} km
+
+weekdays: Sun|Mon|Tue|Wed|Thu|Fri|Sat
+
+weekdays1: S|M|T|W|T|F|S
+
+calTitle: Moon phases, {a} to {b}
+
+calLabel: Moon phases for the next month at {place}
+
+moonWord: the Moon
+
+gapText: {n} minutes
+
+gapFallback: a long while
+
+moonUp: {a}, about {b}% lit, and up in the evening sky
+
+moonDown: {a}, about {b}% lit, and below the horizon in the evening
+
+<!-- ch5-6 -->
+
+earthLabel: Earth
+
+moonLabel: Moon
+
+dayN: Day {n}
+
+dayPrev: Earlier day
+
+dayNext: Next day
+
+moonPhases: new|waxing crescent|first quarter|waxing gibbous|full|waning gibbous|last quarter|waning crescent
+
+moonRises: rises at {a}
+
+moonSets: sets at {a}
+
+marsLabel: Mars
+
+venusLabel: Venus
+
+planetNames: Mercury|Venus|Mars|Jupiter|Saturn
+
+venusEvening: an evening star
+
+venusMorning: a morning star
+
+venusNear: too close to the Sun to see
+
+eveningStar: Evening star: east of the Sun
+
+morningStar: Morning star: west of the Sun
+
+sunPathLabel: Sun's path
+
+moonPathLabel: Moon's path
+
+nodeLabel: node
+
+shadowLabel: Earth's shadow
+
+degAbove: {n}° above
+
+degBelow: {n}° below
+
+inShadow: in the shadow
+
+eclLunar: {a} lunar eclipse on {b}
+
+eclSolar: {a} solar eclipse on {b}
+
+eclNone: none in the next few years
+
+lunarKinds: a total|a partial
+
+solarKinds: a total|an annular|a partial
+
+agesLabel: Move through the ages
+
+eclPoleLabel: pole of the Sun's path
+
+todayWord: today
+
+tropicCancer: Cancer
+
+tropicCapricorn: Capricorn
+
 # Chapter 1 {#ch1}
 
 title: Finding your way
@@ -827,11 +977,331 @@ title: The wanderers
 
 summary: Planets, the Moon and the Sun's path: the lights that do not keep their places.
 
+## Lesson 5.1 {#l5.1}
+
+title: The Moon's changing face
+
+hook: The Moon is a ball lit by the Sun. Its phase is how much of the lit half faces you.
+
+### Watch {#watch}
+
+c1: The Moon makes no light of its own. The Sun always lights one half of it.
+
+c2: We look at the same hour each evening, one day at a time. The diagram shows the Sun, Earth and Moon from above.
+
+c3: Night after night the Moon rises, on average, about 50 minutes later, because it moves about 12° east among the stars. [src:moon-later]
+
+c4: A quarter of the way round, the angle is 90° and half of the Moon's face is lit: first quarter.
+
+c5: At 180° the Moon is opposite the Sun. We see all of its lit side: a full Moon.
+
+c6: After full, the Moon rises too late for the evening, so we look at dawn instead. The lit part shrinks again.
+
+c7: One round takes about 29 and a half days. Then it starts again.
+
+### Try {#try}
+
+prompt: Use the buttons to step through the days until the Moon is full.
+
+hint: The Moon is full when it stands opposite the Sun, 180° round the diagram. Watch the lit part grow.
+
+success: Full Moon. It stands opposite the Sun, so the whole lit side faces you.
+
+### The old way {#oldway}
+
+text: People counted months from Moon to Moon long before they measured years by the Sun: the English words "month" and "Moon" share an old root. [src:month-moon] The Islamic calendar still has 12 lunar months in a year of 354 or 355 days. [src:month-moon]
+
+### Tonight outside {#tonight}
+
+text: Tonight the Moon over {place} is {moonPhaseName}, about {moonLit}% lit. It {moonTimes}. The next full Moon is on {nextFullDate}.
+
+noTimes: Tonight the Moon over {place} is {moonPhaseName}, about {moonLit}% lit. It does not rise or set during this day from {place}. The next full Moon is on {nextFullDate}.
+
+## Lesson 5.2 {#l5.2}
+
+title: Wandering stars
+
+hook: A few lights do not keep their places among the stars. Mars sometimes even turns round.
+
+### Watch {#watch}
+
+c1: Most stars keep their places. The planets do not: night after night they drift against the stars.
+
+c2: We have jumped to {marsOppDate}, when Earth overtakes Mars and Mars shines opposite the Sun. We look at the same hour each night.
+
+c3: Mars is the bright orange light. The gold trail shows where it has been among the stars. For now it creeps east, as planets usually do.
+
+c4: Now it slows down, stops, and turns back. It is moving west against the stars! [src:retrograde]
+
+c5: This is called retrograde motion. It lasts a little over two months.
+
+c6: Mars has not changed course. Earth, on the inside track, overtakes it, and from Earth it seems to slip backwards for a while. [src:retrograde]
+
+### Try {#try}
+
+prompt: Move through the months until Mars is moving backwards against the stars, from east to west.
+
+hint: Mars creeps east for most of the year. Watch its short tail: you are looking for the weeks when it turns round.
+
+success: Yes. Mars is moving backwards now, westward against the stars. This is retrograde motion.
+
+### The old way {#oldway}
+
+text: The word "planet" comes from the Greek planetes, "wanderer". [src:planet-word] The seven-day week follows the seven wanderers you can see without a telescope: the Sun, the Moon and five planets. In Italian, martedì is still "day of Mars", though English Tuesday uses the Germanic god Tiw. [src:planet-word]
+
+### Tonight outside {#tonight}
+
+text: From {place} at {localEveningTime} tonight, {planetList}. Planets keep to one line across the sky, the path of the Sun and Moon.
+
+none: No bright planet is above the horizon from {place} at {localEveningTime} tonight. Look again an hour before dawn, when other planets may be up.
+
+## Lesson 5.3 {#l5.3}
+
+title: Morning star, evening star
+
+hook: Venus never wanders far from the Sun, so you see it only after sunset or before dawn.
+
+### Watch {#watch}
+
+c1: Venus circles the Sun inside Earth's orbit. So from Earth it can never get far from the Sun. [src:venus-elongation]
+
+c2: Here it is at its farthest east of the Sun, shining after sunset: an evening star.
+
+c3: The chart follows the angle between Venus and the Sun. It swings out east, comes back, and swings out west, like a pendulum.
+
+c4: Months later Venus is west of the Sun. It rises before the Sun does: a morning star.
+
+c5: Venus never gets more than about 47° from the Sun, so it is never up in the middle of the night. [src:venus-elongation]
+
+### Try {#try}
+
+prompt: Is Venus an evening star or a morning star this month?
+
+optionEvening: An evening star: it follows the Sun down
+
+optionMorning: A morning star: it leads the Sun up
+
+optionNear: Neither: it is too close to the Sun to see
+
+hint: Venus is east of the Sun when it shines after sunset, and west of the Sun when it shines before sunrise.
+
+wrong: Not quite. Which side of the Sun is Venus on right now?
+
+success: Yes. This month Venus is {venusState}, about {venusDeg}° from the Sun.
+
+### The old way {#oldway}
+
+text: The Greeks called Venus Phosphoros in the morning and Hesperos in the evening, and at first took them for two different stars. [src:venus-two-names] A Babylonian tablet named for King Ammisaduqa records 21 years of Venus's appearances and disappearances, and its observations are thought to date from the 17th century BC. [src:venus-two-names]
+
+### Tonight outside {#tonight}
+
+evening: Venus is an evening star now. From {place}, look {venusWhere}, about {venusLead} minutes after sunset. Its next greatest elongation, its widest angle from the Sun, is {venusMaxDeg}° {venusMaxSide} of the Sun, on {venusMaxDate}.
+
+morning: Venus is a morning star now. From {place}, look {venusWhere}, about {venusLead} minutes before sunrise. Its next greatest elongation, its widest angle from the Sun, is {venusMaxDeg}° {venusMaxSide} of the Sun, on {venusMaxDate}.
+
+hidden: From {place} Venus is not well placed tonight: it is too close to the Sun, or too low. Its next greatest elongation, its widest angle from the Sun, is {venusMaxDeg}° {venusMaxSide} of the Sun, on {venusMaxDate}. It is easy to find around then.
+
+## Lesson 5.4 {#l5.4}
+
+title: Eclipses
+
+hook: The Moon's path is tilted against the Sun's, so most full and new Moons miss Earth's shadow.
+
+### Watch {#watch}
+
+c1: The gold line is the Sun's path across the stars. The Moon's path, in white, is tilted about 5° from it. [src:eclipse-geometry]
+
+c2: The two paths cross at two points, called nodes.
+
+c3: At full Moon, Earth's shadow lies on the Sun's path. The chart shows how far above or below it the Moon passes, month by month.
+
+c4: Most months the Moon passes above or below the shadow, and nothing happens.
+
+c5: Then a full Moon falls close to a node. On {eclipseDate} it enters Earth's shadow: {eclipseKind} lunar eclipse.
+
+c6: The paths cross twice a year, so eclipses come in two seasons, about six months apart. The same works at new Moon, when the Moon can pass in front of the Sun. [src:eclipse-geometry]
+
+### Try {#try}
+
+prompt: Which of these full Moons will be eclipsed? The dots on the sky show where the Moon will stand.
+
+hint: An eclipse needs the full Moon to fall close to a node, where the Moon's path crosses the Sun's.
+
+wrong: No eclipse then: that full Moon passes well above or below Earth's shadow.
+
+option: {label}
+
+success: Yes. On {eclipseDate} the full Moon falls close to a node and enters Earth's shadow.
+
+### The old way {#oldway}
+
+text: Babylonian astronomers knew a cycle of 223 lunar months, about 18 years and 11 days, after which a similar eclipse follows. It was later called the saros. [src:saros] The Antikythera mechanism, a Greek geared device from the 2nd century BC, had a dial that tracked this cycle to show when eclipses could occur. [src:antikythera]
+
+### Tonight outside {#tonight}
+
+text: From {place}, the next lunar eclipse you can see is {lunarNext}. The next solar eclipse you can see is {solarNext}. Never look at the Sun without proper eclipse glasses.
+
 # Chapter 6 {#ch6}
 
 title: The slow wobble
 
 summary: How Earth's axis drifts, and why the pole star changes over thousands of years.
+
+## Lesson 6.1 {#l6.1}
+
+title: A spinning top
+
+hook: Earth's axis slowly circles once in about 25,800 years. So the pole star changes.
+
+### Watch {#watch}
+
+away: From {place} the north pole of the sky is too low to show this well, so we are flying to {awayPlace}.
+
+c1: This is the north pole of the Sun's path, in the constellation Draco. Earth's axis leans 23.4° away from it.
+
+c2: The axis does not stay put. It slowly swings round, like the axis of a spinning top that starts to wobble.
+
+c3: Its tip is the north celestial pole, the point the sky turns around. Watch it draw a circle among the stars. One lap takes about 25,800 years. [src:precession-period]
+
+c4: Today the pole sits next to Polaris.
+
+c5: Thousands of years on, it swings towards Vega, a bright star in Lyra. Around {vegaYear} it is very near.
+
+c6: So no star is the pole star for ever. The job passes round the circle.
+
+### Try {#try}
+
+prompt: Move through the ages until the pole star is Vega.
+
+hint: Vega is the bright star in Lyra. The pole reaches it about 11,700 years from now, so slide well to the right.
+
+success: Yes. Around {vegaYear} the north pole points close to Vega.
+
+### The old way {#oldway}
+
+text: Around 127 BC the Greek astronomer Hipparchus compared his position for the star Spica with older measurements and found that it had moved about 2° along the ecliptic. [src:hipparchus-precession] He concluded that the equinoxes shift by at least 1° per century; the true rate is 1° in about 72 years. [src:hipparchus-precession]
+
+### Tonight outside {#tonight}
+
+north: Polaris is about {polarisSep}° from the north celestial pole tonight, and it will be closest, about half a degree away, around {polarisYear}. From {place} it stands {poleAlt}° up, due north.
+
+south: Polaris is about {polarisSep}° from the north celestial pole tonight, and it will be closest, about half a degree away, around {polarisYear}. From {place} it never rises, and no bright star marks the south pole.
+
+## Lesson 6.2 {#l6.2}
+
+title: The pyramid builders' pole star
+
+hook: About 4,800 years ago the pole stood beside a faint star in Draco, not Polaris.
+
+### Watch {#watch}
+
+c1: We are at Giza, in Egypt, going back to about 2800 BC.
+
+c2: Face north. The pole is the point the sky turns around, and a faint star, Thuban, sat very close to it. [src:thuban-pyramids]
+
+c3: Thuban is faint, and it drifted off the pole. Egyptologist Kate Spence proposed in 2000 that the pyramid builders used two brighter stars, Kochab and Mizar, to find true north. [src:thuban-pyramids]
+
+c4: On her idea, when the two stars hang one above the other, a plumb line through them marks north. [src:thuban-pyramids]
+
+c5: Let the plumb line fall to the horizon: that direction is true north.
+
+### Try {#try}
+
+prompt: Which star marked north in 2800 BC?
+
+hint: It was in Draco, the Dragon, between the two Bears. Today it is nowhere near the pole.
+
+wrong: Not that one. That star was nowhere near the pole in 2800 BC. Try again.
+
+success: Thuban. In 2800 BC it sat almost exactly on the north celestial pole.
+
+### The old way {#oldway}
+
+text: The Great Pyramid's sides are aligned to true north to within about three arcminutes, a twentieth of a degree. [src:thuban-pyramids] Nobody knows for sure how the builders found north: Spence's two-star method is one proposal. [src:thuban-pyramids]
+
+### Tonight outside {#tonight}
+
+visible: From {place} at {localEveningTime} tonight, Thuban is {thubanWhere}. Look between the bowl of the Big Dipper and the Little Dipper, along the winding body of Draco, the Dragon. It is faint, so you need a dark sky.
+
+below: Thuban is below the horizon from {place} at {localEveningTime} tonight. It rises later in the night, or on another evening. Look between the bowl of the Big Dipper and the Little Dipper.
+
+hidden: Thuban never rises from {place}: it lies too far north to be seen from the far south.
+
+## Lesson 6.3 {#l6.3}
+
+title: Why the Tropics have the wrong names
+
+hook: The Tropic of Cancer is named after a constellation. But the Sun no longer stands there.
+
+### Watch {#watch}
+
+c1: It is noon at the June solstice, when the Sun is farthest north. Which stars is it in front of?
+
+c2: Today the solstice Sun stands in front of {todayCons}.
+
+c3: Now we go back about 2,300 years, to around 300 BC. The Sun keeps its calendar date, but the stars slide behind it.
+
+c4: Back then the June solstice Sun stood in Cancer. That is why the line where it shines straight down is called the Tropic of Cancer: it was named in the last centuries BC. [src:tropics-names]
+
+c5: The seasons stay tied to the Sun, but the stars have slid. In the same way the March equinox point, once called the First Point of Aries, now lies in Pisces. [src:first-point-aries]
+
+### Try {#try}
+
+prompt: Today, in which constellation does the Sun stand at the June solstice?
+
+hint: The Sun's place among the stars slides slowly over the centuries. The old zodiac signs are out of date.
+
+wrong: Not that one. Look at where the Sun stands among the stars.
+
+success: Yes. The solstice Sun has moved on from the constellation that gave the Tropic its name.
+
+### The old way {#oldway}
+
+text: The Tropics of Cancer and Capricorn take their names from the zodiac signs the Sun stood in at the June and December solstices when the lines were named, over 2,000 years ago. [src:tropics-names] Precession has since moved the solstices: today the Sun is in Taurus in June and Sagittarius in December. [src:tropics-names]
+
+### Tonight outside {#tonight}
+
+text: The Tropic nearest {place} is the Tropic of {tropicName}, about {tropicKm} km to the {tropicDir}. At the next {solsticeMonth} solstice, on {solsticeDate}, the Sun will stand in front of {solsticeCons}, not {tropicCons}, where the name says.
+
+on: You live almost on the Tropic of {tropicName}. The Sun shines straight down on it at its solstice. At the next {solsticeMonth} solstice, on {solsticeDate}, the Sun will stand in front of {solsticeCons}, not {tropicCons}.
+
+## Lesson 6.4 {#l6.4}
+
+title: Even the stars move
+
+hook: Stars drift too, slowly, each in its own direction. Over thousands of years the sky changes shape.
+
+### Watch {#watch}
+
+away: From {place} the sky would not keep Arcturus in view, so we are flying to {awayPlace}.
+
+c1: Stars are not fixed. Each one drifts through space, and from here we see that as a slow slide across the sky: proper motion. Halley first showed it in 1718. [src:halley-proper-motion]
+
+c2: Here is Arcturus, in Boötes. We run the clock from 10,000 BC to AD 15,000. The gold trail shows its path.
+
+c3: Now the Big Dipper. We keep only the stars' own drift and run it 100,000 years each way at today's speed. The blue dashes show its shape today.
+
+c4: Five of the Dipper's stars drift together, but Dubhe and Alkaid move in very different directions, so its shape slowly changes. [src:big-dipper-change]
+
+c5: In 10,000 years the change is slight. By 100,000 years it is easy to see. [src:big-dipper-change]
+
+### Try {#try}
+
+prompt: Move through the ages until Arcturus has drifted 5° from where it stands today.
+
+hint: Arcturus moves about half a degree in 800 years, so you need about 8,000 years either way. The dashed ring is 5° wide.
+
+success: Yes. Arcturus has left the ring: it has drifted more than 5° from its place today.
+
+### The old way {#oldway}
+
+text: In 1718 Edmond Halley noticed that three bright stars, Sirius, Arcturus and Aldebaran, had shifted by more than half a degree from their positions in the ancient catalogue tradition of Hipparchus and Ptolemy. [src:halley-proper-motion] Stars, not just the sky, were moving.
+
+### Tonight outside {#tonight}
+
+visible: From {place} at {localEveningTime} tonight, Arcturus is {arcturusWhere}. It drifts about a Moon's width, half a degree, in about 800 years. [src:arcturus-pm]
+
+below: Arcturus is below the horizon from {place} at {localEveningTime} tonight. Look for it later in the night or on another evening. It drifts about a Moon's width, half a degree, in about 800 years. [src:arcturus-pm]
 
 # Chapter 7 {#ch7}
 
@@ -839,8 +1309,340 @@ title: What stars are
 
 summary: Colour, brightness and distance: what stars are made of and how far away they lie.
 
+## Lesson 7.1 {#l7.1}
+
+title: Colours are temperatures
+
+hook: Stars are not all white. Their colours tell you how hot they are.
+
+### Watch {#watch}
+
+moved: Neither pair is up right now, so the clock moves on until one is.
+
+c1: Look at these two stars: {hotName} and {coolName}. One is {hotColour}. The other is {coolColour}.
+
+c2: {hotName} is {hotColour}. Its surface is roughly {hotTemp} degrees.
+
+c3: {coolName} is {coolColour}, and cooler: roughly {coolTemp} degrees.
+
+c4: Heat an iron bar and it glows red, then orange, then white. A hotter star is bluer still.
+
+c5: A star's colour is its thermometer: blue-white is hot, orange and red are cooler. The Sun, at about 5,800 degrees, sits in between. [src:star-colour-temp]
+
+### Try {#try}
+
+prompt: Which of these two stars is hotter?
+
+hint: Look at their colours in the sky. Blue-white stars are hotter than orange or red ones.
+
+success: Yes. {hotName} is the hotter star, roughly {hotTemp} degrees against {coolTemp} for {coolName}.
+
+wrong: {name} is the cooler one. Look at the colours: blue-white means hotter than orange or red.
+
+### The old way {#oldway}
+
+text: Around the year 150, Ptolemy's star catalogue marked six stars as reddish: Arcturus, Aldebaran, Pollux, Antares, Betelgeuse and, puzzlingly, Sirius, which looks white today. [src:ptolemy-red-stars] The name Antares comes from Greek and means "rival of Ares", because the star is as red as Mars, the planet of Ares, the Greek god of war. [src:antares-name]
+
+### Tonight outside {#tonight}
+
+text: From {place} tonight, look for {hotName} and {coolName}. {hotName} is {hotColour} and {coolName} is {coolColour}. Compare them side by side: even city lights cannot hide the difference.
+
+none: Tonight no strongly contrasting pair of bright stars is up from {place}. Compare the brightest stars you can see: the bluer ones are hotter, the orange ones cooler.
+
+## Lesson 7.2 {#l7.2}
+
+title: Bright, or just close?
+
+hook: A star can look bright because it is powerful, or because it is near. The sky does not tell you which.
+
+### Watch {#watch}
+
+away: Deneb never rises high enough to see from {homePlace}, so we travel to {awayPlace} for a look.
+
+moved: These two are not both up right now, so the clock moves on until they are.
+
+c1: Meet Vega and Deneb, two bright stars. Vega looks a little brighter.
+
+c2: Now their distances. Vega is {vegaDist} light-years away. Deneb is {denebDist}. [src:deneb-vega]
+
+c3: So Deneb is about {distRatio} times farther away, and it still looks nearly as bright. [src:deneb-vega]
+
+c4: Move Deneb to Vega's distance and it would look about {boost} times brighter than it does now.
+
+c5: Brightness in the sky mixes two things: how much light a star gives out, and how far away it is.
+
+c6: Astronomers count brightness in magnitudes, and the scale runs backwards. Vega is {vegaMag}, Deneb {denebMag}. Smaller means brighter. [src:magnitude-scale]
+
+### Try {#try}
+
+prompt: Which of these looks brighter but is farther away?
+
+hint: The scale runs backwards: a smaller magnitude means a brighter star. Compare both numbers in each answer.
+
+option: {label}: magnitude {farMag}, {farDist} light-years
+
+success: Yes. {farName} looks brighter than {nearName}, yet it is {farDist} light-years away, against {nearDist}. It must give out far more light.
+
+wrong: {name} looks fainter, and it is the closer one. Pick the star that looks brighter and lies farther away.
+
+### The old way {#oldway}
+
+text: The Greeks sorted stars into six classes of brightness: first magnitude for the brightest, sixth for the faintest you can see. The scale appears in Ptolemy's Almagest, about the year 150, and is thought to come from Hipparchus. In 1856 Norman Pogson fixed it so that five steps equal exactly a factor of 100 in brightness. [src:magnitude-scale]
+
+### Tonight outside {#tonight}
+
+text: The brightest star above {place} at {localEveningTime} tonight is {tonightStar}: magnitude {tonightMag}, and {tonightDist} light-years away. Is it bright because it is close, or because it is powerful?
+
+nodist: The brightest star above {place} at {localEveningTime} tonight is {tonightStar}: magnitude {tonightMag}. Look it up on the star's card to see how far away it is.
+
+## Lesson 7.3 {#l7.3}
+
+title: Looking back in time
+
+hook: Starlight is old. When you see a star, you see light that left it long ago.
+
+### Watch {#watch}
+
+moved: What we need is not in your evening sky right now, so the clock moves on to a time when it is.
+
+c1: Light is fast, but space is huge. Starlight takes years to reach you.
+
+c2: A light-year is how far light travels in one year: about 9.46 trillion kilometres. [src:light-year]
+
+star: {starName}: {starLy} light-years away. This light left {ago}{when}. [src:light-year]
+
+andromeda: This faint glow is the Andromeda Galaxy, one of the most distant things you can see with the naked eye. Its light left {andAgo}. [src:light-year]
+
+lmc: This is the Large Magellanic Cloud, a small galaxy next to ours, about 160,000 light-years away. Its light left about 160,000 years ago.
+
+last: So every look at the night sky is a look back in time. The farther the star, the older the light.
+
+### Try {#try}
+
+prompt: Tap a star whose light left before the year {cutoffYear}.
+
+hint: Light that old comes from stars farther than about {cutoffLy} light-years. {farStars} are far enough.
+
+success: Yes. That star is farther than {cutoffLy} light-years away, so its light set out before the year {cutoffYear}.
+
+wrong: {name} is only {starLy} light-years away, so its light is newer than that. Try a star farther out.
+
+### The old way {#oldway}
+
+text: For centuries nobody knew how far away any star was. In 1838 Friedrich Bessel published the first widely accepted distance to a star, 61 Cygni: about 10 light-years by his figures, close to today's 11.4. Struve (Vega) and Henderson (Alpha Centauri) measured parallaxes at about the same time, but Struve's result was doubted and Henderson published in 1839. [src:bessel-parallax] Bessel watched the star shift very slightly against the stars behind it as Earth moved round the Sun.
+
+### Tonight outside {#tonight}
+
+up: From {place}, the Andromeda Galaxy is {andWhere} at {localEveningTime} tonight. From a dark site, look for a faint, stretched glow. Its light left about 2.5 million years ago. [src:light-year]
+
+lmc: The Andromeda Galaxy does not rise high enough from {place}, but the Large Magellanic Cloud is up tonight, {lmcWhere}: a pale glow, a small galaxy beside ours.
+
+below: The Andromeda Galaxy is below the horizon from {place} at {localEveningTime} tonight. {andSeasonLine}
+
+## Lesson 7.4 {#l7.4}
+
+title: Our galaxy, seen from inside
+
+hook: The pale band across a dark sky is our own galaxy, and we are looking at it from within.
+
+### Watch {#watch}
+
+away: The centre of the Milky Way never climbs high enough to see from {homePlace}, so we travel to {awayPlace}.
+
+moved: The centre of the galaxy is not in your evening sky right now, so the clock moves on to a time of year when it is.
+
+c1: On a very dark night, a pale band of light crosses the sky. This is the Milky Way.
+
+c2: It is a huge, flat disc of stars, and we live inside it. Looking along the disc, we see it edge-on, as a band.
+
+c3: Follow the band towards Sagittarius. The centre of our galaxy lies that way, 26,000 to 27,000 light-years from us. [src:galactic-centre]
+
+c4: See the dark lane splitting the band? That is the Great Rift: clouds of dust that block the light of the stars behind them.
+
+c5: Near the Southern Cross, the dark patch called the Coalsack is another dust cloud.
+
+c6: Nearly every star you can see belongs to this one galaxy. The band is where they pile up along your line of sight.
+
+### Try {#try}
+
+prompt: Turn to face the centre of the Milky Way, towards Sagittarius.
+
+hint: Drag the sky until the thickest, brightest part of the band is in the middle of your screen. It lies {gcWhere}.
+
+success: That is the centre of our galaxy: 26,000 to 27,000 light-years away, in the direction of Sagittarius. [src:galactic-centre]
+
+### The old way {#oldway}
+
+text: In 1610 Galileo turned his telescope on the pale band and found that it is made of countless faint stars. [src:galileo-milkyway] The Greeks called it the "milky circle", which gave us the word galaxy, and in East Asia it was the "Silver River". [src:milkyway-names] For many Aboriginal Australian peoples, including the Kamilaroi (Gamilaraay) and Euahlayi, the Emu in the Sky is a figure drawn in the dark dust lanes of the band, with its head at the Coalsack. [src:emu-in-sky]
+
+### Tonight outside {#tonight}
+
+text: From {place}, the bright core of the Milky Way is best placed in the evening sky from {mwFrom} to {mwTo}, up to about {mwMax}° high. Go to a dark place with no Moon, and look for it {mwWhere}, at about 10 pm.
+
+low: From {place}, the core of the Milky Way never climbs above about {mwMax}° and stays low and faint. Look at the band higher up instead, or travel south, nearer the equator, to see the centre.
+
 # Chapter 8 {#ch8}
 
 title: Losing and finding the night
 
 summary: What city lights hide, and how to get the dark sky back.
+
+## Lesson 8.1 {#l8.1}
+
+title: What we lost
+
+hook: Under a dark sky the stars crowd together. Under city lights most of them vanish.
+
+### Watch {#watch}
+
+c1: This is a dark site: no town lights for miles. The Milky Way crosses the whole sky.
+
+c2: Now let us add light, one step at a time.
+
+step: {quality}: about {count} stars above the horizon.
+
+c3: More than 80% of people now live under light-polluted skies, and the Milky Way is hidden from more than one third of humanity. [src:falchi-2016]
+
+c4: Skies are still getting brighter: a large citizen-science study of star counts suggests the sky grew roughly 10% brighter a year from 2011 to 2022, though satellites show less. [src:kyba-2023]
+
+### Try {#try}
+
+prompt: Look at {consName}. Move the slider until the sky looks like the one above your home, then tap "That's my sky".
+
+hint: Count the stars of {consName} that you can really see from home. The fewer you see, the brighter your sky.
+
+success: You chose the {chosenName} sky, and Explore now matches it. Tap "Keep this setting" to keep it after the lesson. Volunteers in a project called Globe at Night do just this. [src:globe-at-night]
+
+### The old way {#oldway}
+
+text: Before electric light, everyone saw this sky on every clear night. Around the year 150, Ptolemy listed about 1,020 stars in 48 constellations, all seen without a telescope. [src:ptolemy-catalogue] [src:magnitude-scale]
+
+### Tonight outside {#tonight}
+
+text: Tonight from {place}, a {chosenName} sky shows about {chosenCount} stars above the horizon. A dark site would show about {darkCount}; a big city, about {cityCount}. Go out and count the stars in one small patch of sky.
+
+## Lesson 8.2 {#l8.2}
+
+title: Giving your eyes time
+
+hook: Your eyes need about twenty minutes in the dark. One bright screen undoes it.
+
+### Watch {#watch}
+
+c1: You step outside from a bright room. The sky looks almost empty.
+
+min: Minute {minute}: fainter stars are coming out. You now see down to magnitude {limit}.
+
+c2: Your eyes take about 20 to 30 minutes to adapt well to the dark, and longer to reach full sensitivity. [src:dark-adaptation]
+
+c3: A flash of white light undoes much of it. Dim red light disturbs it least. [src:dark-adaptation]
+
+c4: So this is red night mode: the screen keeps only red light, to spare your eyes. Look slightly aside from faint things to see them better. [src:averted-vision]
+
+### Try {#try}
+
+prompt: Turn on red night mode.
+
+hint: Tap the Red night mode button under this text. You can also find it in the Sky menu.
+
+success: Red mode is on. Use it, with your phone's brightness turned down, whenever you check the sky outside.
+
+### The old way {#oldway}
+
+text: Before telescopes, every star-watcher had only the dark-adapted eye. It was enough to reach about the sixth magnitude: Ptolemy's catalogue lists about 1,020 stars down to about that level. [src:ptolemy-catalogue]
+
+### Tonight outside {#tonight}
+
+text: Tonight, from {place}, try this. First turn your phone's brightness right down and switch on red mode. Then wait 20 minutes without looking at a bright screen. Then find {faintTarget}, {faintWhere}, and look a little to one side of it, not straight at it: the centre of your eye has almost no cells for dim light, so faint things show up better off-centre. [src:averted-vision]
+
+generic: Tonight, turn your phone's brightness right down, switch on red mode and wait 20 minutes. Then pick the faintest star you can see and look slightly to one side of it: faint things show up better off-centre. [src:averted-vision]
+
+## Lesson 8.3 {#l8.3}
+
+title: Finding a dark sky
+
+hook: A dark sky is a place and a date: far from city lights, on a night with no Moon.
+
+### Watch {#watch}
+
+c1: From space, cities glow at night. That light spills upwards and brightens the sky for many kilometres around.
+
+c2: The rings are 50 km and 100 km from {place}. The farther you drive from the glow, the darker the sky.
+
+c3: The Moon matters too. A bright Moon washes out faint stars, even in the countryside.
+
+c4: Here are the next evenings at {place}, each with the Moon's phase.
+
+c5: The gold evenings are the darkest: the Moon is down from the end of twilight until midnight. Plan your trip for those.
+
+### Try {#try}
+
+prompt: Which of these evenings is darkest for stargazing?
+
+hint: A new Moon gives no light, and a thin Moon sets early. Read the phases in the calendar.
+
+option: {label}
+
+success: Yes. On that evening the Moon is down from the end of twilight to midnight, so only the stars light the sky.
+
+wrong: On {name} the Moon is still up after dark. Pick the evening when it has already set.
+
+### The old way {#oldway}
+
+text: DarkSky International, founded in 1988 as the International Dark-Sky Association, certifies Dark Sky Places. The first International Dark Sky Park was Natural Bridges National Monument in Utah, in 2007. [src:dark-sky-places] In 2001 John Bortle published a nine-step scale of sky darkness, from class 1, the darkest, to class 9, an inner-city sky. [src:bortle]
+
+### Tonight outside {#tonight}
+
+text: From {place}, the Moon stays out of the evening sky {winWhen}: it is down from the end of twilight until midnight. Pick one of those evenings for a trip to a dark place.
+
+now: Tonight is already a moonless evening at {place}, and it stays that way until {winTo}. If the sky is clear, go out and look.
+
+none: From {place}, the Moon is up for part of every evening in the next month. Look for a thin crescent, which sets early.
+
+## Lesson 8.4 {#l8.4}
+
+title: Your sky tonight
+
+hook: Put it all together: a tour of the sky you can see from your own doorstep tonight.
+
+### Watch {#watch}
+
+c1: Here is tonight's sky from {place}, on {tourDate}. One stop at a time.
+
+planet: First, {tourPlanet}. It is a planet, so it wanders among the stars and twinkles less than they do. You met the wanderers in chapter 5.
+
+pole: Next, the pole. The whole sky turns round {poleName}, which stands {poleAlt}° above your horizon. You found it in chapter 1 and saw why in chapter 4.
+
+cons: Here is {tourCons}. Constellations like it shift with the hour and the season, as you saw in chapters 2 and 3.
+
+moon: The Moon is up too. In chapter 5 you learnt to read its phase and path.
+
+mw: And from a dark site, the Milky Way arches overhead: our own galaxy, from chapter 7.
+
+last: That is your sky tonight. You can find your way round it, you know what its stars are, and you know how to see it at its best.
+
+### Try {#try}
+
+prompt: Now find three of these in the sky yourself. Tap one: {tourLeft}.
+
+prompt2: {found} of 3 found. Tap another: {tourLeft}.
+
+prompt3: {found} of 3 found. Tap one more: {tourLeft}.
+
+hint: Drag the sky until you see {hintName}: it is {hintWhere}. Then tap it.
+
+hint2: Drag the sky until you see {hintName}: it is {hintWhere}. Then tap it.
+
+hint3: Drag the sky until you see {hintName}: it is {hintWhere}. Then tap it.
+
+success: Three found. You can now find your way round tonight's sky on your own.
+
+wrong: {name} is not one of the objects on the list. Try one of the ones named above.
+
+### The old way {#oldway}
+
+text: Many Aboriginal Australian peoples hold detailed star knowledge in oral tradition, ceremony and art, and used it for seasonal calendars, timekeeping and finding direction. Songlines are song cycles that map routes across land and sometimes sky, and they differ between peoples. [src:songlines-stars]
+
+### Tonight outside {#tonight}
+
+text: Your checklist for {tourDate}, from {place}. Wait for the Sun to set, then about {duskGap} more, until the sky is fully dark. Turn your phone's brightness down and switch on red mode. The Moon: {moonLine}. Look for {tourList}. Give your eyes 20 minutes, then count what you see. Now put the phone away and go outside.

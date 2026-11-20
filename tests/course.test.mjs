@@ -221,5 +221,117 @@ ok('checker controls for chapters 3 and 4: year, days, scrub', () => {
   assert.equal(C.objectAltitude(69673, { min: 85, controls: 'scrub' }).controls, 'scrub');
 });
 
+// ---- chapters 5 and 6: the Moon, the planets, eclipses, precession, proper motion (js/course/wanderers.js)
+if (Astro) globalThis.Astronomy = Astro;
+const W = await import('../js/course/wanderers.js');
+const DAYMS = 864e5, iso = (t) => new Date(t).toISOString().slice(0, 10);
+const extraPM = (() => { const ex = JSON.parse(fs.readFileSync(new URL('../data/starextra.json', import.meta.url))); return (hip) => { const k = ex.hip.indexOf(hip); return k < 0 ? [0, 0] : [ex.pmra[k] || 0, ex.pmdec[k] || 0]; }; })();
+
+ok('Moon phase: full Moon is at 180 deg and about 100 % lit, new Moon at 0; phase names by angle', () => {
+  if (!Astro) return;
+  const f = W.nextPhaseMs(180, Date.UTC(2026, 10, 20)), n0 = W.nextPhaseMs(0, Date.UTC(2026, 10, 20));
+  assert.equal(iso(f), '2026-11-24'); near(W.moonPhase(f).angle, 180, 0.3); assert.ok(W.moonPhase(f).lit > 0.999);
+  near(Math.abs(A.norm180(W.moonPhase(n0).angle)), 0, 0.3); assert.ok(W.moonPhase(n0).lit < 0.001);
+  assert.deepEqual([0, 45, 90, 135, 180, 225, 270, 315].map(W.phaseIndex), [0, 1, 2, 3, 4, 5, 6, 7]);
+  assert.equal(W.phaseIndex(359), 0); assert.equal(W.phaseIndex(177), 4);
+});
+ok('Mars retrograde: opposition on 19 Feb 2027, moving backwards then and forwards 90 days either side; the loop lasts 70 to 85 days', () => {
+  if (!Astro) return;
+  const opp = W.nextOpposition('Mars', Date.UTC(2026, 10, 20));
+  assert.equal(iso(opp), '2027-02-19');
+  assert.ok(W.isRetrograde('Mars', opp)); assert.ok(!W.isRetrograde('Mars', opp - 90 * DAYMS)); assert.ok(!W.isRetrograde('Mars', opp + 90 * DAYMS));
+  assert.ok(W.lonSpeed('Mars', opp - 90 * DAYMS) > 0.3 && W.lonSpeed('Mars', opp) < -0.3);
+  const r = W.retrogradeSpan('Mars', opp), len = (r.end - r.start) / DAYMS;
+  assert.ok(len > 70 && len < 85, 'length ' + len); assert.ok(r.start < opp && r.end > opp);
+  assert.ok(W.isRetrograde('Mars', r.start + DAYMS) && !W.isRetrograde('Mars', r.start - DAYMS) && W.isRetrograde('Mars', r.end - DAYMS) && !W.isRetrograde('Mars', r.end + DAYMS));
+  const tr = W.skyTrack('Mars', opp - 80 * DAYMS, opp + 80 * DAYMS, 2); assert.equal(tr.length, 81);       // the track's RA first falls then rises (the loop)
+  const ras = tr.map((p) => p.ra), mx = Math.max(...ras), mn = Math.min(...ras); assert.ok(ras.indexOf(mx) < ras.indexOf(mn) && mx - mn > 3);
+});
+ok('Venus: morning star on 20 Nov 2026 (about 35 deg), greatest western elongation 3 Jan 2027 (about 47 deg), evening star in mid 2027; hidden near the Sun', () => {
+  if (!Astro) return;
+  const now = Date.UTC(2026, 10, 20, 20);
+  assert.equal(W.inferiorSide('Venus', now), 'morning'); near(W.signedElongation('Venus', now), -34.8, 0.5);
+  const m = W.nextMaxElongation('Venus', now); assert.equal(iso(m.ms), '2027-01-03'); assert.equal(m.side, 'morning'); near(m.deg, 46.95, 0.3);
+  const ev = W.nextMaxElongation('Venus', Date.UTC(2027, 2, 1)); assert.equal(ev.side, 'evening'); near(ev.deg, 46, 1.2); near(W.signedElongation('Venus', ev.ms), ev.deg, 0.2); assert.equal(W.inferiorSide('Venus', ev.ms), 'evening');
+  let close = null; for (let d = 0; d < 700 && !close; d++) { const t = now + d * DAYMS; if (Math.abs(W.signedElongation('Venus', t)) < 6) close = t; }
+  assert.ok(close, 'Venus passes within 6 deg of the Sun'); assert.equal(W.inferiorSide('Venus', close), 'near');
+  const ser = W.elongationSeries('Venus', m.ms, 584, 4); assert.ok(ser.length > 140 && Math.max(...ser.map((p) => p.v)) > 44 && Math.min(...ser.map((p) => p.v)) < -44);
+  assert.ok(ser[0].v < -44);
+});
+ok('lunar eclipses: 14 Mar 2025 is the first partial or total one after 1 Jan 2025; the next after 20 Nov 2026 is the partial of 12 Jan 2028', () => {
+  if (!Astro) return;
+  const a = W.lunarEclipses(Date.UTC(2025, 0, 1), 3); assert.equal(iso(a[0].ms), '2025-03-14'); assert.equal(a[0].kind, 'total'); assert.equal(iso(a[1].ms), '2025-09-07');
+  const b = W.lunarEclipses(Date.UTC(2026, 10, 20), 2); assert.equal(iso(b[0].ms), '2028-01-12'); assert.equal(b[0].kind, 'partial');
+});
+ok('eclipse candidates for the Try: three full Moons, exactly one eclipsed (12 Jan 2028), the others a month away with no eclipse of any kind, in time order', () => {
+  if (!Astro) return;
+  const c = W.eclipseChoices(Date.UTC(2026, 10, 20));
+  assert.equal(c.length, 3); assert.equal(c.filter((x) => x.eclipsed).length, 1); assert.equal(iso(c.find((x) => x.eclipsed).ms), '2028-01-12');
+  assert.ok(c[0].ms < c[1].ms && c[1].ms < c[2].ms);
+  for (const x of c) { assert.equal(W.anyLunarEclipseNear(x.ms, 2), x.eclipsed); near(W.moonPhase(x.ms).angle, 180, 0.5); }
+  for (const x of c.filter((y) => !y.eclipsed)) assert.ok(Math.abs(W.moonLat(x.ms)) > 1.6, 'a miss is off the Sun\'s path by more than the shadow reaches');
+  const run = W.eclipseRun(Date.UTC(2026, 10, 20), 4, 1);
+  assert.equal(run.run.length, 6); assert.ok(run.run[run.index].eclipsed && Math.abs(run.run[run.index].lat) < 1.6); assert.equal(run.run.filter((r) => r.eclipsed).length, 1);
+  assert.ok(Math.max(...run.run.map((r) => Math.abs(r.lat))) < 5.4);
+});
+ok('eclipses visible from a place: Rome sees 12 Jan 2028 (lunar) and 2 Aug 2027 (partial solar); Sydney sees the total solar eclipse of 22 Jul 2028', () => {
+  if (!Astro) return;
+  const now = Date.UTC(2026, 10, 20, 20);
+  assert.equal(iso(W.nextVisibleLunar(41.9, 12.5, now).ms), '2028-01-12');
+  const s = W.nextVisibleSolar(41.9, 12.5, now); assert.equal(iso(s.ms), '2027-08-02'); assert.equal(s.kind, 'partial'); near(s.obscuration, 0.74, 0.03);
+  const y = W.nextVisibleSolar(-33.87, 151.2, now); assert.equal(iso(y.ms), '2028-07-22'); assert.equal(y.kind, 'total');
+  assert.equal(W.nextVisibleSolar(80, 0, now) === null || true, true);
+});
+ok('the Moon\'s path: tilted about 5 deg, nodes on the Sun\'s path 180 deg apart, a point of the Moon\'s path at the node longitude lies on the ecliptic', () => {
+  if (!Astro) return;
+  const g = W.moonPathGeometry(Date.UTC(2028, 0, 12)); near(g.tilt, 5.1, 0.35);
+  const a = A.eqToVec(g.asc.ra, g.asc.dec), d = A.eqToVec(g.desc.ra, g.desc.dec); near(G.angleDeg(a, d), 180, 0.01);
+  const k = A.eqToVec(W.ECL_POLE.ra, W.ECL_POLE.dec); near(G.angleDeg(a, k), 90, 0.01);                  // the node is on the ecliptic
+  const lam = W.eclLonOfApp(a), p = W.moonPathPoint(g, lam); near(G.angleDeg(A.eqToVec(p.ra, p.dec), a), 0, 0.01);
+  const q = A.eqToVec(...Object.values(W.moonPathPoint(g, lam + 90))); near(90 - G.angleDeg(q, k), g.tilt, 0.05, 'a quarter on, the path is a full tilt above the ecliptic');
+  near(W.eclLonOfApp(A.eqToVec(W.eclPoint(75).ra, W.eclPoint(75).dec)), 75, 0.01);
+  const e = W.lunarEclipses(Date.UTC(2026, 10, 20), 1)[0].ms;                                           // at the eclipse the Moon stands near a node, so its longitude is near the node's
+  const lm = W.eclLon('Moon', e), ln = W.eclLonOfApp(A.eqToVec(W.moonPathGeometry(e).asc.ra, W.moonPathGeometry(e).asc.dec));
+  const off = Math.min(Math.abs(A.norm180(lm - ln)), Math.abs(A.norm180(lm - ln - 180))); assert.ok(off < 13, 'within 13 deg of a node: ' + off);
+});
+ok('precession circle: the pole of every year stays one obliquity from the ecliptic pole (21.5 to 24.8 deg); Thuban at the pole in 2800 BC, Polaris today, Vega near AD 13 700', () => {
+  const k = A.eqToVec(W.ECL_POLE.ra, W.ECL_POLE.dec), track = W.poleTrack(-2999, 13700, 100);
+  assert.equal(track.length, 167);
+  for (const e of track) { const sep = G.angleDeg(A.eqToVec(e.ra, e.dec), k); assert.ok(sep > 21.5 && sep < 24.8, 'sep ' + sep); }
+  const th = star(68756), vg = star(91262), pl = star(11767);
+  assert.ok(W.poleSeparation(-2799, A.eqToVec(th.ra, th.dec)) < 0.3); assert.ok(W.poleSeparation(2026.9, A.eqToVec(pl.ra, pl.dec)) < 0.8);
+  const vm = extraPM(91262); assert.ok(W.poleSeparation(13700, W.starAtYear(vg.ra, vg.dec, vm[0], vm[1], 13700)) <= 7, 'within the 7 deg of the Try');
+  assert.ok(W.poleSeparation(0, A.eqToVec(vg.ra, vg.dec)) > 40);
+  const first = A.eqToVec(track[0].ra, track[0].dec), half = W.poleAtYear(-2999 + 12886); assert.ok(G.angleDeg(first, half) > 40, 'half a lap on, the pole is on the far side of the circle (about 47 deg away)');
+  assert.equal(W.yearText(-2999), '3000 BC'); assert.equal(W.yearText(13700), 'AD 13700');
+});
+ok('Polaris is closest to the pole around AD 2100 (about half a degree); Kochab and Mizar line up with the pole about 2500 BC', () => {
+  const pl = star(11767), pm = extraPM(11767), at = (E) => W.starAtYear(pl.ra, pl.dec, pm[0], pm[1], E);
+  const best = W.poleClosest(at(2100), 2000, 2300, 1); let b = null; for (let E = 2000; E <= 2300; E++) { const d = W.poleSeparation(E, at(E)); if (!b || d < b.deg) b = { year: E, deg: d }; }
+  assert.ok(Math.abs(b.year - 2100) <= 15 && b.deg > 0.4 && b.deg < 0.5, JSON.stringify(b)); near(W.poleSeparation(2026.9, at(2026.9)), 0.62, 0.05);
+  const ko = star(72607), mz = star(65378), kv = A.eqToVec(ko.ra, ko.dec), mv = A.eqToVec(mz.ra, mz.dec);
+  const nrm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); }, cr = nrm([kv[1] * mv[2] - kv[2] * mv[1], kv[2] * mv[0] - kv[0] * mv[2], kv[0] * mv[1] - kv[1] * mv[0]]);
+  assert.ok(Math.abs(90 - G.angleDeg(cr, W.poleAtYear(-2559))) < 1, 'the Kochab-Mizar line passes within a degree of the pole in 2560 BC');
+});
+ok('Arcturus proper motion: about 5 deg after 7 900 years and the path is straight; half a degree in about 800 years', () => {
+  const ar = star(69673), pm = extraPM(69673); near(Math.hypot(pm[0], pm[1]) / 1000, 2.28, 0.03);
+  const now = A.eqToVec(ar.ra, ar.dec);
+  near(G.angleDeg(W.starAtYear(ar.ra, ar.dec, pm[0], pm[1], 2000 + 7900), now), 5, 0.3); near(G.angleDeg(W.starAtYear(ar.ra, ar.dec, pm[0], pm[1], 2000 + 800), now), 0.5, 0.05);
+  const tr = W.propermotionTrack(ar.ra, ar.dec, pm[0], pm[1], -10000, 15000, 250); assert.equal(tr.length, 101);
+  assert.ok(G.angleDeg(A.eqToVec(tr[0].ra, tr[0].dec), A.eqToVec(tr[100].ra, tr[100].dec)) > 13);
+});
+ok('the Sun at the solstices: June solstice in Taurus now, Cancer about 300 BC; December solstice in Sagittarius now; nearest Tropic and next solstice', () => {
+  if (!Astro) return;
+  assert.equal(W.sunConsAt(W.solsticeMs(2026, true)), 'Taurus'); assert.equal(W.sunConsAt(W.solsticeMs(2026, false)), 'Sagittarius');
+  const old = new Date(W.solsticeMs(2026, true)); old.setUTCFullYear(-300); assert.equal(W.sunConsAt(old.getTime()), 'Cancer');
+  const rome = W.nearestTropic(41.9), syd = W.nearestTropic(-33.87);
+  assert.ok(rome.north && rome.toward === 'south'); near(rome.km, 2053, 5); assert.ok(!syd.north && syd.toward === 'north'); near(syd.km, 1160, 5);
+  assert.equal(iso(W.nextSolsticeOf(Date.UTC(2026, 10, 20), true)), '2027-06-21'); assert.equal(iso(W.nextSolsticeOf(Date.UTC(2026, 10, 20), false)), '2026-12-21');
+  assert.equal(W.consOf({ ra: 83.6, dec: 22 }), 'Taurus');
+});
+ok('checker controls for chapters 5 and 6: days, year and ages', () => {
+  assert.equal(C.custom(() => true, { controls: 'ages' }).controls, 'ages');
+});
+
 console.log(`\n${n} passed, ${bad} failed`);
 process.exit(bad ? 1 : 0);

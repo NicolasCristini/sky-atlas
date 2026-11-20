@@ -41,6 +41,8 @@ export default [
     keys: ['watch.c1', 'watch.c1b', 'watch.c2', 'watch.c3', 'watch.flat', 'try.wrong', 'try.option', 'try.optionOne', 'tonight.north', 'tonight.south'],
     placeholders: ['label'],
     tonightKey: (P) => (P.north ? 'north' : 'south'),
+    /** The pole label would read out the pole's height, which is the answer. */
+    async trySetup(X) { X.noPoleLabel(); await X.D.prep(); await X.D.toSky(X.S.sky.az, X.S.sky.alt, X.S.sky.fov); },
     try: choice({
       options: (X) => {
         const n = fistsToPole(X.S.obs.lat), set = new Set([n - 1, n, n + 1, n + 2]);
@@ -90,6 +92,7 @@ export default [
       c.show = async (X) => { X.ov.segment(HIP.merak, HIP.dubhe, { extend: 5, color: 'gold', grow: 1600 }); await X.D.wait(1800); await base(X); };
       return c;
     })(),
+    hideLabels: [11767],
     async trySetup(X) { await X.lesson.stage(X, false); },
     /** Put the Dipper and Polaris on screen at a good hour (travelling north first if this sky cannot show Polaris). */
     async stage(X, announce) {
@@ -148,7 +151,8 @@ export default [
       selected(HIP.acrux),
       facing({ az: 180, tol: 24, altMin: Math.max(-5, Math.abs(X.S.obs.lat) - 22), altMax: Math.abs(X.S.obs.lat) + 22, showAlt: Math.abs(X.S.obs.lat), fov: 90 }),
     ]),
-    async trySetup(X) { await X.lesson.stage(X, false); X.a.select(null); },
+    hideLabels: [60718],
+    async trySetup(X) { X.noPoleLabel(); await X.lesson.stage(X, false); X.a.select(null); },
     async stage(X, announce) {
       const { D, S } = X;
       await D.prep();

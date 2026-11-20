@@ -28,7 +28,7 @@ export class LabelLayer {
     const { camera, w, h } = ctx;
     const rects = this.rects; rects.length = 0;
     for (const it of this.items) {
-      let vis = ctx.on[it.group] !== false && ctx.on[it.group];
+      let vis = !it.hidden && ctx.on[it.group] !== false && ctx.on[it.group];
       let op = 1, x = 0, y = 0;
       if (vis) {
         if (it.kind === 'world') {

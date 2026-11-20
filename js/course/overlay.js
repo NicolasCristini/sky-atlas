@@ -259,6 +259,52 @@ export function createOverlay(a) {
     },
   });
 
+  // ---------------------------------------------------------------- glow (7.2) and ground ring (8.3)
+  Object.assign(DRAW, {
+    /** A soft disc of light at a sky point whose radius (CSS px) grows from `from` to `to` over `ms` (an illustration of "if it were nearer"). */
+    glow(it) {
+      const p = world(it.p); if (!p || !toScreen(p, it.horizon !== false)) return;
+      const k = reduced ? 1 : ease(Math.min(1, Math.max(0, (performance.now() - it.t0 - (it.delay || 0)) / (it.ms || 2400)))), r = it.from + (it.to - it.from) * k;
+      const [cr, cg, cb] = rgb(it.color), al = it.fade * (it.alpha ?? 1), g = ctx.createRadialGradient(sp[0], sp[1], 0, sp[0], sp[1], r);
+      g.addColorStop(0, `rgba(255,255,255,${al})`); g.addColorStop(0.18, `rgba(${cr},${cg},${cb},${0.85 * al})`); g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sp[0], sp[1], r, 0, 7); ctx.fill();
+      if (it.text) label(it.text, sp[0] + (it.dx ?? 0), sp[1] + (it.dy ?? r + 14), { ...it, color: it.textColor || it.color });
+    },
+    /** Globe mode: a circle on the ground, radiusKm around a place (lat, lon). */
+    gring(it, u) {
+      const c = G.unit(A.latLonToVec(it.lat, it.lon)), ang = it.radiusKm / 6371 / G.DEG, [uu, vv] = G.perpBasis(c), pts = [];
+      for (let i = 0; i <= 72; i++) { const v = G.circlePoint(c, uu, vv, ang, (i / 72) * 2 * Math.PI); pts.push([v[0] * 1.002, v[1] * 1.002, v[2] * 1.002]); }
+      gStroke(pts, it, u);
+      if (it.text && u > 0.6) { const v = G.circlePoint(c, uu, vv, ang, it.textPhi ?? 0.6), q = gProject([v[0] * 1.002, v[1] * 1.002, v[2] * 1.002]); if (q && !q.hidden) label(it.text, q.x + (it.dx || 0), q.y + (it.dy ?? -12), { ...it, color: it.textColor || it.color }); }
+    },
+  });
+
+  // ---------------------------------------------------------------- paths on the sky and flat diagrams (chapters 5 and 6)
+  Object.assign(DRAW, {
+    /** A track of sky points ({ra, dec}, J2000: it follows the stars) drawn up to `upTo` (0..1 or a function); only the last `tail` points, fading towards the old end. */
+    path(it, u) {
+      const pts = typeof it.pts === 'function' ? it.pts() : it.pts, n = pts.length; if (n < 2) return;
+      const f = typeof it.upTo === 'function' ? it.upTo() : (it.upTo ?? 1), cnt = Math.max(0, Math.min(n - 1, Math.floor(f * (n - 1) * u + 1e-9)));
+      const from = it.tail ? Math.max(0, cnt - it.tail) : 0, [r, g, b] = rgb(it.color), hz = it.horizon !== false;
+      let prev = world(pts[from]);
+      for (let i = from + 1; i <= cnt; i++) {
+        const cur = world(pts[i]);
+        if (cur && prev && toScreen(prev, hz)) {
+          const x0 = sp[0], y0 = sp[1];
+          if (toScreen(cur, hz)) {
+            const al = (it.fadeTail === false ? 1 : 0.12 + 0.88 * ((i - from) / Math.max(1, cnt - from))) * (it.alpha ?? 1) * it.fade;
+            ctx.lineCap = 'round'; ctx.setLineDash(it.dash || []);
+            for (const [w, col] of [[(it.width || 2.4) + 2.4, `rgba(2,5,12,${(0.4 * al).toFixed(3)})`], [it.width || 2.4, `rgba(${r},${g},${b},${al.toFixed(3)})`]]) { ctx.lineWidth = w; ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(sp[0], sp[1]); ctx.stroke(); }
+            ctx.setLineDash([]);
+          }
+        }
+        prev = cur;
+      }
+    },
+    /** A flat diagram in screen space: it.draw(ctx, { W, H, fade, u, label }) is called every frame (see js/course/diagrams.js). */
+    screen(it, u) { it.draw(ctx, { W, H, fade: it.fade, u, label }); },
+  });
+
   // ---------------------------------------------------------------- frame
   function frame(now) {
     nowMs = S.time;
@@ -300,6 +346,10 @@ export function createOverlay(a) {
     text: (p, str, o = {}) => add('text', { p, str, ...o }),
     /** Star trail since a time (ms or fn). tickHours draws a tick per hour, tickLabel(k) names it. */
     trail: (p, o = {}) => add('trail', { p, since: S.time, ...o }),
+    /** A track of {ra, dec} points on the sky (follows the stars), revealed up to upTo (0..1 or fn), last `tail` points only (5.2, 6.1, 6.4). {color, width, alpha, dash, tail, upTo, fadeTail} */
+    path: (pts, o = {}) => add('path', { pts, color: 'gold', width: 2.6, ...o }),
+    /** A flat diagram in screen space: draw(ctx, { W, H, fade, label }) runs every frame (5.1, 5.3, 5.4; see diagrams.js). */
+    screen: (draw, o = {}) => add('screen', { draw, ...o }),
     /** Globe mode: straight line between two world points (arrays or functions), Earth radius 1. {color, width, dash, grow, text, textAt, hiddenAlpha} */
     gline: (a0, b0, o = {}) => add('gline', grown({ a: a0, b: b0, color: 'gold', width: 2.4, globe: true, ...o }, o.grow ?? 1200)),
     /** Globe mode: arc about the Earth's centre between two directions, at radius r. */
@@ -309,6 +359,10 @@ export function createOverlay(a) {
     /** World position of a place (Earth radius 1 times k) and the Sun's direction (unit) in the globe's frame. */
     geo: (lat, lon, k = 1) => A.latLonToVec(lat, lon).map((x) => x * k),
     sunDir: () => [a.sunWorld.x, a.sunWorld.y, a.sunWorld.z],
+    /** A soft disc of light at a sky point, radius growing from `from` to `to` px over `ms` (7.2). {color, ms, delay, text, dy} */
+    glow: (p, from, to, o = {}) => add('glow', { p, from, to, color: 'white', ...o }),
+    /** Globe mode: a circle on the ground radiusKm around (lat, lon) (8.3). {color, width, dash, grow, text, textPhi} */
+    gring: (lat, lon, radiusKm, o = {}) => add('gring', grown({ lat, lon, radiusKm, color: 'gold', width: 2.2, globe: true, ...o }, o.grow ?? 1600)),
     clear() { items.length = 0; ctx.clearRect(0, 0, W, H); shown = false; },
     get count() { return items.length; },
     world: pointOf,
