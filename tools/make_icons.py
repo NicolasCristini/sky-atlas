@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the Sky Atlas app icons into icons/ (pure stdlib: no Pillow needed).
+"""Render the StarSight app icons into icons/ (pure stdlib: no Pillow needed).
 
 Design: dark-blue night sky, a glowing planetary horizon arc, one gold star above it (same star as the favicon).
   python3 tools/make_icons.py

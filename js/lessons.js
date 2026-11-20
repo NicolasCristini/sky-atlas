@@ -1,4 +1,4 @@
-// Sky Atlas lessons: the content (short texts with live numbers) and the "Show me" demo scripts.
+// StarSight lessons: the content (short texts with live numbers) and the "Show me" demo scripts.
 // Pure content + scripts. The card, the snapshot/restore logic and the tips live in lessonui.js; a demo only talks to the toolkit `D`
 // that lessonui builds (D.say, D.wait, D.toSky, D.slew, D.travel, D.play, D.layer, D.findTime ...). Every D call stops by throwing when the
 // demo is cancelled, so a script never needs to check for it.

@@ -61,7 +61,7 @@ const ls = {
   if (!ios || standalone || otherBrowser || ls.get('skyatlas.ios-hint') === '1') return;
   const el = document.createElement('div');
   el.id = 'ios-hint'; el.className = 'panel'; el.setAttribute('role', 'note');
-  el.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><span><b>Install Sky Atlas</b><br>Tap Share, then Add to Home Screen.</span><button class="icon-btn" aria-label="Dismiss" title="Dismiss"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+  el.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><span><b>Install StarSight</b><br>Tap Share, then Add to Home Screen.</span><button class="icon-btn" aria-label="Dismiss" title="Dismiss"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
   el.hidden = true; document.body.appendChild(el);
   el.querySelector('button').addEventListener('click', () => { el.hidden = true; ls.set('skyatlas.ios-hint', '1'); });
   const welcome = document.getElementById('hint');

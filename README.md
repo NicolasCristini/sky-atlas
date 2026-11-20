@@ -1,4 +1,4 @@
-# Sky Atlas
+# StarSight
 
 Pick any place on a 3D globe, see the sky from there, and understand **why the sky changes with where you stand**.
 

@@ -1,6 +1,6 @@
 {
-  "name": "Sky Atlas",
-  "short_name": "Sky Atlas",
+  "name": "StarSight",
+  "short_name": "StarSight",
   "description": "Pick any place on a 3D globe and see its sky: why latitude changes which stars you see.",
   "id": "./",
   "start_url": "./",

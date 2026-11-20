@@ -6,8 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sky Atlas">
-<title>Sky Atlas — why the sky changes with place</title>
+<meta name="apple-mobile-web-app-title" content="StarSight">
+<title>StarSight — why the sky changes with place</title>
 <meta name="theme-color" content="#04060c">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Pick any place on a 3D globe and see its sky. Travel between places and watch the stars swing to understand why latitude changes which stars you see.">
@@ -136,7 +136,7 @@
 
 <button id="time-pill" type="button" hidden aria-controls="timebar" aria-label="Time is not running normally: open the time controls" title="Open the time controls"><span id="tp-icon" aria-hidden="true"></span><span id="tp-text"></span></button>
 
-<nav id="dock" aria-label="Sky Atlas controls">
+<nav id="dock" aria-label="StarSight controls">
   <button id="dk-search" class="dk" type="button" data-sheet="search" aria-expanded="false" aria-controls="place" aria-label="Search a place, star or planet" title="Search a place, star or planet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg><span>Search</span></button>
   <button id="dk-mode" class="dk" type="button" data-act="mode" aria-pressed="false" aria-label="Look up at the sky from here" title="Look up at the sky from here"><svg class="ic-sky" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18"/><path d="M12 16.5V4.5M7.5 9L12 4.5 16.5 9"/><path d="M7 20a5 5 0 0 1 10 0" opacity=".55"/></svg><svg class="ic-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.6 2.4 3.9 5.2 3.9 8.5s-1.3 6.1-3.9 8.5c-2.6-2.4-3.9-5.2-3.9-8.5S9.4 5.9 12 3.5z"/></svg><span id="dk-mode-t">Look up</span></button>
   <button id="dk-ar" class="dk" type="button" data-act="ar" hidden aria-pressed="false" aria-label="Point at the sky: the view follows your phone" title="Point at the sky: the view follows your phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21.5l-3.3-6.8a1.7 1.7 0 0 1 .8-2.3l5.6-2.6a1.7 1.7 0 0 1 2.3.8l3.3 6.8a1.7 1.7 0 0 1-.8 2.3l-5.6 2.6a1.7 1.7 0 0 1-2.3-.8z" transform="rotate(-8 12 16)"/><path d="M7.2 3.4l.8 1.9 2 .1-1.6 1.2.6 2-1.8-1.1-1.8 1.1.6-2-1.6-1.2 2-.1z" opacity=".9"/><path d="M16 5.6a4.6 4.6 0 0 1 4.4 2.2" opacity=".55"/></svg><span>Point</span></button>
@@ -147,7 +147,7 @@
 </nav>
 
 <div id="hint" class="panel" hidden>
-  <div class="eyebrow">Welcome to Sky Atlas</div>
+  <div class="eyebrow">Welcome to StarSight</div>
   <ul>
     <li><b>Drag</b> to turn the globe, <b>scroll or pinch</b> to zoom.</li>
     <li><b>Tap the globe</b> to travel there, then <b>Look up from here</b>.</li>
@@ -155,8 +155,8 @@
   </ul>
   <button id="hint-ok" class="btn primary">Got it</button>
 </div>
-<div id="loading" role="status"><div class="ld-name">Sky Atlas</div><div id="loading-text">Loading the sky…</div><div class="ld-bar"><i></i></div></div>
-<div id="fallback" hidden>WebGL is not available in this browser, so Sky Atlas cannot draw the globe.</div>
+<div id="loading" role="status"><div class="ld-name">StarSight</div><div id="loading-text">Loading the sky…</div><div class="ld-bar"><i></i></div></div>
+<div id="fallback" hidden>WebGL is not available in this browser, so StarSight cannot draw the globe.</div>
 
 <script src="vendor/astronomy.browser.min.js"></script>
 <script type="module" src="js/main.js"></script>

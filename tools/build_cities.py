@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build data/cities.txt for Sky Atlas from GeoNames (stdlib only).
+"""Build data/cities.txt for StarSight from GeoNames (stdlib only).
 
 Inputs (download from https://download.geonames.org/export/dump/ into one folder):
   cities500.zip (or cities1000.zip)  admin1CodesASCII.txt  countryInfo.txt  alternateNamesV2.zip (optional, ~200 MB;

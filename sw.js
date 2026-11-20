@@ -1,6 +1,6 @@
-// Sky Atlas service worker. Bump CACHE_VERSION to force every client to rebuild its cache.
+// StarSight service worker. Bump CACHE_VERSION to force every client to rebuild its cache.
 // All URLs are relative to this file, so the app works from a sub-path (e.g. GitHub Pages /sky-atlas/).
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const CACHE = 'sky-atlas-' + CACHE_VERSION;
 
 // App shell + local assets. Missing optional files (a 404) are skipped, never fail the install.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build img/milkyway-4k.jpg and img/milkyway-2k.jpg for the Sky Atlas Milky Way.
+"""Build img/milkyway-4k.jpg and img/milkyway-2k.jpg for the StarSight Milky Way.
 
 Source (NASA SVS 4851 "Deep Star Maps 2020", public domain; Gaia DR2: ESA/Gaia/DPAC):
   https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/milkyway_2020_8k.exr   (8192x4096 float16 RGB, 131 MB)

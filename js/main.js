@@ -1,4 +1,4 @@
-// Sky Atlas: bootstrap, state, camera, travel, transitions, input and UI wiring.
+// StarSight: bootstrap, state, camera, travel, transitions, input and UI wiring.
 import * as THREE from '../vendor/three.module.min.js';
 import * as A from './astro.js';
 import { loadData } from './data.js';
