@@ -539,7 +539,7 @@ success: Two hours, 30°: three fists. That is the Earth turning.
 
 ### The old way {#oldway}
 
-text: For most of history people thought the sky turned round a still Earth. Aristarchus of Samos (3rd century BC) suggested, as Archimedes reports, that the Earth circles the Sun, and Heraclides of Pontus (4th century BC) is said to have taught that it turns once a day. Most people kept the Earth still until Copernicus. [src:earth-rotates-ancients]
+text: For most of history people thought the sky turned round a still Earth. Aristarchus of Samos (3rd century BC) suggested[+, as Archimedes reports,+] that the Earth circles the Sun[+, and Heraclides of Pontus (4th century BC) is said to have taught that it turns once a day+]. Most people kept the Earth still until Copernicus. [src:earth-rotates-ancients]
 
 ### Tonight outside {#tonight}
 
@@ -581,7 +581,7 @@ successS: You are facing the {pole} celestial pole, the still point of the sky.
 
 ### The old way {#oldway}
 
-text: Several peoples pictured the pole star as a peg holding up the turning sky. Old Turkic texts call it the "gold stake". In China, the stars around the pole formed the palace of the celestial emperor, the Purple Forbidden Enclosure. [src:pole-nail]
+text: Several peoples pictured the pole star as a peg holding up the turning sky. Old Turkic texts call it the "gold stake".[+ In China, the stars around the pole formed the palace of the celestial emperor, the Purple Forbidden Enclosure.+] [src:pole-nail]
 
 ### Tonight outside {#tonight}
 
@@ -623,7 +623,7 @@ success: Yes. Only stars within {lat}° of the pole stay up all night.
 
 ### The old way {#oldway}
 
-text: The Egyptians called the stars that never set the "Imperishable Ones", and the Pyramid Texts, spells cut into royal pyramids, promise the dead king a place among them. [src:imperishable] In Homer's poems the Bear never dips into the Ocean, and the goddess Calypso tells Odysseus to keep it on his left hand as he sails. [src:homer-bear]
+text: The Egyptians called the stars that never set the "Imperishable Ones"[+, and the Pyramid Texts, spells cut into royal pyramids, promise the dead king a place among them+]. [src:imperishable] In Homer's poems the Bear never dips into the Ocean[+, and the goddess Calypso tells Odysseus to keep it on his left hand as he sails+]. [src:homer-bear]
 
 ### Tonight outside {#tonight}
 
@@ -645,7 +645,7 @@ c2: Time runs fast. The hand turns {handTurn}, 15° every hour.
 
 c3: One full turn takes about a day.
 
-c4: A month later, at the same clock time, the hand is 30° further round: two hours ahead. The sky gains about 4 minutes a day. [src:four-minutes]
+c4: A month later, at the same clock time, the hand is 30° further round: two hours ahead.[+ The sky gains about 4 minutes a day.+] [src:four-minutes]
 
 ### Try {#try}
 
@@ -657,7 +657,7 @@ success: Straight up. Read the hand like a clock hand, and you can tell the hour
 
 ### The old way {#oldway}
 
-text: Navigators used the nocturnal, a hand-held instrument, from about 1400 to 1800, and the pointer stars of the Great Bear served as its hour hand. [src:nocturnal] Much earlier, in the First Intermediate Period (about 2100 BC), Egyptians painted tables of 36 star groups, the decans, on coffin lids: each marked ten days, and 12 rows gave the hours of the night, so the decans helped give us the 12-hour night. [src:decans]
+text: Navigators used the nocturnal, a hand-held instrument, from about 1400 to 1800, and the pointer stars of the Great Bear served as its hour hand. [src:nocturnal] Much earlier[+, in the First Intermediate Period (about 2100 BC)+], Egyptians painted tables of 36 star groups, the decans, on coffin lids: [+each marked ten days, and +]12 rows gave the hours of the night, so the decans helped give us the 12-hour night. [src:decans]
 
 ### Tonight outside {#tonight}
 
@@ -695,7 +695,7 @@ success: {seasonCons} is high in your evening sky. This is its season.
 
 ### The old way {#oldway}
 
-text: The Greek poet Hesiod, in his poem Works and Days, gave farmers a year told by the stars. When the Pleiades rise, begin the harvest. When Orion and Sirius are high in the sky and Arcturus rises at dawn, pick the grapes. When the Pleiades, the Hyades and Orion set, it is time to plough. [src:hesiod]
+text: The Greek poet Hesiod[+, in his poem Works and Days,+] gave farmers a year told by the stars. When the Pleiades rise, begin the harvest.[+ When Orion and Sirius are high in the sky and Arcturus rises at dawn, pick the grapes.+] When the Pleiades, the Hyades and Orion set, it is time to plough. [src:hesiod]
 
 ### Tonight outside {#tonight}
 
@@ -715,7 +715,7 @@ c2: Each day the Sun creeps about 1° eastward against the stars. The line it fo
 
 c3: Now a year goes by. Watch which constellation sits behind the Sun.
 
-c4: The constellations on the ecliptic are the zodiac. You never see the Sun's own constellation, because the Sun is up in daylight. At midnight you see the opposite ones.
+c4: The constellations on the ecliptic are the zodiac. You never see the Sun's own constellation[+, because the Sun is up in daylight+]. At midnight you see the opposite ones.
 
 ### Try {#try}
 
@@ -729,7 +729,7 @@ success: Yes. Today the Sun is in {sunConsNow}. You cannot see that constellatio
 
 ### The old way {#oldway}
 
-text: Around 400 BC, Babylonian astronomers split the Sun's path into twelve equal signs of 30° each. By today's official borders the path crosses thirteen constellations, one of them Ophiuchus. Since Babylonian times the slow wobble of Earth's axis has carried the March equinox from Aries into Pisces, so the signs have slipped by about one constellation. [src:zodiac-babylon]
+text: Around 400 BC, Babylonian astronomers split the Sun's path into twelve equal signs of 30° each.[+ By today's official borders the path crosses thirteen constellations, one of them Ophiuchus.+] Since Babylonian times the slow wobble of Earth's axis has carried the March equinox from Aries into Pisces, so the signs have slipped by about one constellation. [src:zodiac-babylon]
 
 ### Tonight outside {#tonight}
 
@@ -751,7 +751,7 @@ c3: Each morning the Sun has moved on by about 1°. At the same moment of dawn, 
 
 c4: Around {siriusReturnDate} at this latitude, by this simple rule, Sirius first shows in the twilight before sunrise. This first dawn appearance is called its heliacal rising.
 
-c5: Our rule: the Sun is about 9.5° below the horizon, and Sirius at least 2.5° above it. Real sightings depend on the sky and on the eyes of the watcher.
+c5: Our rule: the Sun is about 9.5° below the horizon, and Sirius at least 2.5° above it.[+ Real sightings depend on the sky and on the eyes of the watcher.+]
 
 ### Try {#try}
 
@@ -763,11 +763,11 @@ success: Sirius is back. On this morning it clears the horizon before the Sun ri
 
 ### The old way {#oldway}
 
-text: In ancient Egypt Sirius was called Sopdet, and the Greeks called it Sothis. It vanished from the sky for some weeks, then reappeared just before dawn at about the time the Nile began to rise, and its return was tied to the Egyptian New Year. [src:sirius-nile] The Greeks and Romans linked the star's return to the hottest part of summer, and we still say "dog days", from the Latin dies caniculares. [src:dog-days]
+text: In ancient Egypt Sirius was called Sopdet[+, and the Greeks called it Sothis+]. It vanished from the sky for some weeks, then reappeared just before dawn at about the time the Nile began to rise, and its return was tied to the Egyptian New Year. [src:sirius-nile] [+The Greeks and Romans linked the star's return to the hottest part of summer, and we still say "dog days", from the Latin dies caniculares.+] [src:dog-days]
 
 ### Tonight outside {#tonight}
 
-text: The stars you see in the east before dawn are the evening stars of about four months from now. At 5 am you look eight hours ahead of 9 pm, and each hour is about two weeks of drift. If you are up early, look east from {place} for {dawnPreviewStar}.
+text: The stars you see in the east before dawn are the evening stars of about four months from now.[+ At 5 am you look eight hours ahead of 9 pm, and each hour is about two weeks of drift.+] If you are up early, look east from {place} for {dawnPreviewStar}.
 
 none: From {place} no bright star stands in the east at 5 am tonight. Still, the stars rising in the east before dawn are the evening stars of about four months from now.
 
@@ -799,7 +799,7 @@ success: Those are the Pleiades. Count the stars you can see: most people see si
 
 ### The old way {#oldway}
 
-text: In Greece, Hesiod told farmers to begin the harvest when the Pleiades rise and to plough when they set. [src:hesiod] In Aotearoa New Zealand, for many Māori communities the early-morning rising of Matariki, the Pleiades, in midwinter marks the new year, though some iwi look to Puanga (Rigel) instead; Matariki has been a public holiday since 2022. [src:matariki] In the Andes of Peru and Bolivia, farmers look at how clear the Pleiades are in June to decide when to plant potatoes, and a study in Nature in 2000 found that this works. [src:andes-pleiades]
+text: In Greece, Hesiod told farmers to begin the harvest when the Pleiades rise and to plough when they set. [src:hesiod] In Aotearoa New Zealand, for many Māori communities the early-morning rising of Matariki, the Pleiades, in midwinter marks the new year[+, though some iwi look to Puanga (Rigel) instead; Matariki has been a public holiday since 2022+]. [src:matariki] In the Andes of Peru and Bolivia, farmers look at how clear the Pleiades are in June to decide when to plant potatoes[+, and a study in Nature in 2000 found that this works+]. [src:andes-pleiades]
 
 ### Tonight outside {#tonight}
 
@@ -841,11 +841,11 @@ success: The pole stands 60° up, because you are at latitude 60°. The two numb
 
 ### The old way {#oldway}
 
-text: In the 15th century Portuguese pilots found their latitude from the height of the Pole Star, using a quadrant or an astrolabe. After they crossed the equator they used the Sun's noon height and tables instead. They then "ran down the latitude": they sailed to the right latitude and followed it to their destination. [src:latitude-sailing] One degree of latitude is about 111 km on the ground. [src:km-per-degree]
+text: In the 15th century Portuguese pilots found their latitude from the height of the Pole Star[+, using a quadrant or an astrolabe+]. [+After they crossed the equator they used the Sun's noon height and tables instead.+] They then "ran down the latitude": they sailed to the right latitude and followed it to their destination. [src:latitude-sailing] One degree of latitude is about 111 km on the ground. [src:km-per-degree]
 
 ### Tonight outside {#tonight}
 
-north: Face north from {place} at {localEveningTime}. Hold your fist at arm's length on the horizon and stack fists upwards. Polaris stands about {fistsToPole} fists up, because your latitude is {latTxt}. It sits less than 1° from the true pole, so the count is close. [src:km-per-degree]
+north: Face north from {place} at {localEveningTime}. Hold your fist at arm's length on the horizon and stack fists upwards. Polaris stands about {fistsToPole} fists up, because your latitude is {latTxt}.[+ It sits less than 1° from the true pole, so the count is close.+] [src:km-per-degree]
 
 south: No bright star marks the south pole of the sky. Find it with the Southern Cross (lesson 1.4), then count fists up from the south horizon. From {place} it stands about {fistsToPole} fists up, because your latitude is {latTxt}.
 
@@ -885,7 +885,7 @@ successFlat: From latitude 45° the stars around the south pole never rise. Thei
 
 ### The old way {#oldway}
 
-text: Aristotle pointed out that some stars are seen in Egypt and near Cyprus that are not seen in the north, and he argued that the Earth is a sphere of no great size. [src:aristotle-sphere] From Greece you cannot see Canopus, but from Alexandria it climbs above the horizon. About 100 BC Posidonius used that difference in height to estimate the size of the Earth, though his angle and distance were rough. [src:canopus-posidonius]
+text: Aristotle pointed out that some stars are seen in Egypt and near Cyprus that are not seen in the north, and he argued that the Earth is a sphere of no great size. [src:aristotle-sphere] From Greece you cannot see Canopus, but from Alexandria it climbs above the horizon.[+ About 100 BC Posidonius used that difference in height to estimate the size of the Earth, though his angle and distance were rough.+] [src:canopus-posidonius]
 
 ### Tonight outside {#tonight}
 
@@ -925,7 +925,7 @@ success: Yes, about {earthKm} km: the Earth is roughly 40,000 km round. You meas
 
 ### The old way {#oldway}
 
-text: About 240 BC Eratosthenes compared the noon Sun at Syene (Aswan), where it was said to be overhead at midsummer, with Alexandria, where it was about 7.2° from overhead, one fiftieth of a circle. With a distance of about 5,000 stadia he got roughly 250,000 stadia for the Earth's circumference. How close that is to the true 40,000 km depends on which stadion he used: from under 1 % off to about 16 % off. [src:eratosthenes]
+text: About 240 BC Eratosthenes compared the noon Sun at Syene (Aswan), where it was said to be overhead at midsummer, with Alexandria, where it was about 7.2° from overhead, one fiftieth of a circle. With a distance of about 5,000 stadia he got roughly 250,000 stadia for the Earth's circumference.[+ How close that is to the true 40,000 km depends on which stadion he used: from under 1 % off to about 16 % off.+] [src:eratosthenes]
 
 ### Tonight outside {#tonight}
 
@@ -973,13 +973,13 @@ successPick: Yes. {zenithStar} has a declination close to your latitude, so it p
 
 ### The old way {#oldway}
 
-text: Polynesian wayfinders use zenith stars as markers of latitude: the zenith star of Hawaiʻi is Hōkūleʻa (Arcturus), and that of Tahiti is ʻAʻā (Sirius). [src:zenith-stars] In 1976 the canoe Hōkūleʻa sailed from Hawaiʻi to Tahiti in 34 days, guided by the navigator Mau Piailug of Satawal, in Micronesia, without instruments, for the Polynesian Voyaging Society. [src:hokulea-1976]
+text: Polynesian wayfinders use zenith stars as markers of latitude: the zenith star of Hawaiʻi is Hōkūleʻa (Arcturus), and that of Tahiti is ʻAʻā (Sirius). [src:zenith-stars] In 1976 the canoe Hōkūleʻa sailed from Hawaiʻi to Tahiti in 34 days[+, guided by the navigator Mau Piailug of Satawal, in Micronesia,+] without instruments[+, for the Polynesian Voyaging Society+]. [src:hokulea-1976]
 
 ### Tonight outside {#tonight}
 
-night: From {place} your zenith star is {zenithStar}: of the bright stars, it is the one whose declination best matches your latitude, {latTxt}. Tonight it crosses the middle of your sky at about {zenithStarTime}, {zenithMiss}.
+night: From {place} your zenith star is {zenithStar}[+: of the bright stars, it is the one whose declination best matches your latitude, {latTxt}+]. Tonight it crosses the middle of your sky at about {zenithStarTime}, {zenithMiss}.
 
-season: From {place} your zenith star is {zenithStar}: of the bright stars, it is the one whose declination best matches your latitude, {latTxt}. It crosses the middle of your sky in the small hours or by day tonight, so look for it in {zenithMonth} at 9 pm, when it passes {zenithMiss}.
+season: From {place} your zenith star is {zenithStar}[+: of the bright stars, it is the one whose declination best matches your latitude, {latTxt}+]. It crosses the middle of your sky in the small hours or by day tonight, so look for it in {zenithMonth} at 9 pm, when it passes {zenithMiss}.
 
 # Chapter 5 {#ch5}
 
