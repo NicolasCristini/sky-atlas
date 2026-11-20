@@ -12,7 +12,7 @@ const skyBtn = $('#sky-btn'), layersBtn = $('#layers-btn'), exBtn = $('#explain-
 // ---------------------------------------------------------------- status line (place left, time right)
 (function status() {
   const nm = $('#place-name'), co = $('#place-coords'), stName = $('#st-name'), stCo = $('#st-coords');
-  const copy = () => { stName.textContent = nm.textContent; stCo.textContent = co.textContent; $('#st-place').setAttribute('aria-label', `Place: ${nm.textContent}, ${co.textContent}. Search for another`); };
+  const copy = () => { stName.textContent = nm.textContent; stCo.textContent = co.textContent; $('#st-place').setAttribute('aria-label', `Place: ${nm.textContent}, ${co.textContent}. Search a place, star or planet`); };
   copy();
   const mo = new MutationObserver(copy);
   [nm, co].forEach((el) => mo.observe(el, { childList: true, characterData: true, subtree: true }));

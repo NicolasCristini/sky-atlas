@@ -863,3 +863,13 @@ html.red-night #red-night { display: block; }
 .mc-dark { fill: #202a40; } .mc-lit { fill: #eef1f8; }
 .phone #moon-cal { top: calc(52px + var(--sat, 0px)); width: calc(100vw - 20px); padding: 6px 8px 7px; }
 .phone .mc-c { height: 31px; } .phone .mc-c svg { width: 20px; height: 20px; margin-top: 4px; }
+
+/* ---- sky results in the unified search ---- */
+#suggest li.sg-group { min-height: 0; padding: 6px 10px 2px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); cursor: default; }
+#suggest li.sg-group:hover { background: none; }
+#suggest li.sg-group:not(:first-child) { margin-top: 2px; border-top: 1px solid var(--line); padding-top: 8px; }
+#suggest .sg-hint { flex: none; color: var(--ink-3); font-size: 11px; }
+#suggest .sg-hint.up { color: var(--accent); }
+#suggest li.sg-off { opacity: .55; cursor: default; }
+#suggest li.sg-off:hover { background: none; }
+#card .sk-note { margin: 0 0 10px; padding: 8px 10px; border-left: 2px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.4; }

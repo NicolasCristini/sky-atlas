@@ -9,6 +9,7 @@ import { LabelLayer } from './labels.js';
 import { basisQuat, globePose, skyPose, vecFromLatLon, clamp, lerp, smooth, easeInOut, slerpV3 } from './view.js';
 import { CITIES, QUICK, byName, placeName, searchCities, nearestCity, formatCoord } from './cities.js';
 import { initSearch } from './search.js';
+import { buildIndex, searchSky, horizonNote } from './skysearch.js';
 import * as EX from './explainer.js';
 import * as CARD from './cards.js';
 import { QUALITY_DEFAULT, EXPOSURE_DEFAULT, qualityParams, countVisible, aboutCount, exposureFromSlider, sliderFromExposure } from './skyquality.js';
@@ -420,9 +421,30 @@ async function init() {
     if (sel.type === 'cons') labels.items.forEach((it) => { if (it.id === sel.cons.id) it.el.classList.add('sel'); });
   }
   function closeCard() { select(null); }
-  function selectCons(id) { const c = data.consMap.get(id); if (!c) return; ensureSkyThen(() => select({ type: 'cons', cons: c })); }
-  function selectStarByHip(hip) { const i = data.hipIndex.get(hip); if (i === undefined) return; ensureSkyThen(() => { select({ type: 'star', index: i }); centreOnSelection(); }); }
-  function selectDso(id) { const d = data.dso.find((x) => x.id === id); if (!d) return; ensureSkyThen(() => { select({ type: 'dso', dso: d }); centreOnSelection(); }); }
+  // `search` (the search box) also turns to face the pick and explains a pick that is below the horizon
+  function selectCons(id, search) { const c = data.consMap.get(id); if (!c) return; ensureSkyThen(() => { select({ type: 'cons', cons: c }); if (search) centreOnSelection(true); }); }
+  function selectStarByHip(hip, search) { const i = data.hipIndex.get(hip); if (i === undefined) return; ensureSkyThen(() => { select({ type: 'star', index: i }); if (search) horizonCardNote(); centreOnSelection(search === true); }); }
+  function selectDso(id, search) { const d = data.dso.find((x) => x.id === id); if (!d) return; ensureSkyThen(() => { select({ type: 'dso', dso: d }); if (search) horizonCardNote(); centreOnSelection(search === true); }); }
+  function selectBody(name, search) { const b = sky.bodies.find((x) => x.id === name); if (!b) return; ensureSkyThen(() => { select({ type: 'body', body: b }); if (search) horizonCardNote(); centreOnSelection(search === true); }); }
+  /** When the card's object is below the horizon: say when it rises, or that it never does from here. */
+  function horizonCardNote() {
+    const sel = S.sel; if (!sel || sel.type === 'cons' || altAzOfEq(selEq(sel, _t3)).alt >= 0) return;
+    const eq = selEq(sel, _t3), o = { Astronomy, lat: S.obs.lat, lon: S.obs.lon, ms: S.time, place: placeLabel(S.obs.lat, S.obs.lon), clock: S.tm === 'day' };
+    o.decNow = Math.asin(clamp(precP[3] * eq.x + precP[4] * eq.y + precP[5] * eq.z, -1, 1)) * RAD;
+    if (sel.type === 'body') { o.name = o.body = sel.body.id; }
+    else if (sel.type === 'star') { o.name = sel.info.title; o.ra = data.stars.ra[sel.index]; o.dec = data.stars.dec[sel.index]; }
+    else { o.name = sel.dso.name; o.ra = sel.dso.ra; o.dec = sel.dso.dec; }
+    const p = document.createElement('p'); p.className = 'sk-note'; p.setAttribute('role', 'status'); p.textContent = horizonNote(o);
+    const live = card.querySelector('#card-live'); if (live) live.before(p);
+  }
+  // search index over the sky, built on first use
+  let skyIdx = null;
+  const skyHit = (e) => e.kind === 'star' ? { type: 'star', index: e.index } : e.kind === 'body' ? { type: 'body', body: sky.bodies[e.index] } : e.kind === 'dso' ? { type: 'dso', dso: data.dso[e.index] } : { type: 'cons', cons: data.consMap.get(e.id) };
+  const skySearch = {
+    search: (q, n) => searchSky(skyIdx ||= buildIndex(data, { bodies: sky.bodies, consOf: (ra, dec) => { try { return Astronomy.Constellation(ra / 15, dec).name; } catch (e) { return ''; } } }), q, n),
+    status: (e) => { const hidden = e.planet && e.id !== 'Sun' && S.ages.fade < 0.5; return { hidden, alt: hidden ? 0 : altAzOfEq(selEq(skyHit(e), _t3)).alt }; },   // planets and the Moon are hidden far from today
+    pick: (e) => { if (e.kind === 'star') selectStarByHip(e.id, true); else if (e.kind === 'dso') selectDso(e.id, true); else if (e.kind === 'cons') selectCons(e.id, true); else selectBody(e.id, true); },
+  };
   function ensureSkyThen(fn) {
     if (S.mode === 'sky' && !S.trans) { fn(); return; }
     if (S.mode === 'globe' && !S.trans && !S.travel) { enterSky().then(fn); return; }
@@ -438,9 +460,14 @@ async function init() {
     else if (sel.type === 'dso') el.innerHTML = CARD.dsoLive(sel.dso, aa, lat, decNow);
     else if (sel.type === 'cons') el.innerHTML = CARD.consLive(data, sel.cons, lat, aa, epochArg());
   }
-  function centreOnSelection() {
+  /** Degrees to look lower so the object sits above a phone card instead of behind it (search picks only). */
+  function cardLift() {
+    if (card.hidden || !IS_NARROW() || card.offsetTop < innerHeight * 0.25) return 0;
+    return Math.max(0, (innerHeight / 2 - card.offsetTop / 2) / innerHeight * S.sky.fov);
+  }
+  function centreOnSelection(lift) {
     if (!S.sel) return;
-    const run = () => { const aa = altAzOfEq(selEq(S.sel, _t3)); slewTo(aa.az, Math.max(aa.alt, 6), S.sel.type === 'cons' ? Math.max(S.sky.fov, 65) : undefined); };
+    const run = () => { const aa = altAzOfEq(selEq(S.sel, _t3)); slewTo(aa.az, Math.max(aa.alt, 6) - (lift === true ? cardLift() : 0), S.sel.type === 'cons' ? Math.max(S.sky.fov, 65) : undefined); };
     if (S.mode === 'sky' && !S.trans) run();
     else if (S.mode === 'globe' && !S.trans && !S.travel) { const aa = altAzOfEq(selEq(S.sel, _t3)); enterSky({ az: aa.az, alt: Math.max(aa.alt, 6) }); }
   }
@@ -775,7 +802,7 @@ async function init() {
   chipsEl.addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (!b) return; const q = QUICK[+b.dataset.i]; goTo(q.lat, q.lon); });
   const hooks = { userTravel: null };   // the lessons module listens here: a manual trip ends a running lesson demo
   function goTo(lat, lon) { if (S.journey) S.journey.cancel = true; if (hooks.userTravel) hooks.userTravel(); travelTo(lat, lon); }
-  initSearch({ input: $('#search'), list: $('#suggest'), spinner: $('#search-spin'), live: $('#search-live'), onPick: (c) => goTo(c.lat, c.lon) });
+  initSearch({ input: $('#search'), list: $('#suggest'), spinner: $('#search-spin'), live: $('#search-live'), onPick: (c) => goTo(c.lat, c.lon), sky: skySearch });
   $('#geo').addEventListener('click', () => { if (!navigator.geolocation) return; try { navigator.geolocation.getCurrentPosition((p) => goTo(p.coords.latitude, p.coords.longitude), () => {}, { timeout: 8000, maximumAge: 600000 }); } catch (e) { /* fail silently */ } });
 
   // ------------------------------------------------------------------ mode switching UI

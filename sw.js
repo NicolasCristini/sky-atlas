@@ -1,6 +1,6 @@
 // Sky Atlas service worker. Bump CACHE_VERSION to force every client to rebuild its cache.
 // All URLs are relative to this file, so the app works from a sub-path (e.g. GitHub Pages /sky-atlas/).
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE = 'sky-atlas-' + CACHE_VERSION;
 
 // App shell + local assets. Missing optional files (a 404) are skipped, never fail the install.
@@ -8,7 +8,7 @@ const CACHE = 'sky-atlas-' + CACHE_VERSION;
 const PRECACHE = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/main.js', 'js/astro.js', 'js/cards.js', 'js/cities.js', 'js/data.js', 'js/explainer.js', 'js/globe.js', 'js/labels.js',
-  'js/mini.js', 'js/search.js', 'js/shaders.js', 'js/shell.js', 'js/dock.js', 'js/sky.js', 'js/view.js', 'js/ages.js', 'js/skyquality.js', 'js/lessons.js', 'js/lessonui.js', 'js/learn.js',
+  'js/mini.js', 'js/search.js', 'js/shaders.js', 'js/shell.js', 'js/dock.js', 'js/sky.js', 'js/view.js', 'js/ages.js', 'js/skyquality.js', 'js/lessons.js', 'js/lessonui.js', 'js/learn.js', 'js/skysearch.js',
   'js/ar/ar.js', 'js/ar/orient.js', 'js/ar/wmm.js',
   'js/course/text.js', 'js/course/geo.js', 'js/course/checks.js', 'js/course/overlay.js', 'js/course/kit.js', 'js/course/index.js', 'js/course/ch1.js', 'js/course/ch2.js', 'js/course/ch3.js', 'js/course/ch4.js', 'js/course/ch5.js', 'js/course/ch6.js', 'js/course/ch7.js', 'js/course/ch8.js', 'js/course/diagrams.js', 'js/course/nightsky.js', 'js/course/nightx.js', 'js/course/wanderers.js',
   'content/en/course.md',

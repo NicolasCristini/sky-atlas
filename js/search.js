@@ -1,4 +1,4 @@
-// Place search: combobox over the worldwide GeoNames index (lazy) with the built-in list as instant fallback.
+// Unified search: combobox over things in the sky (stars, planets, objects: see skysearch.js) and the worldwide GeoNames index of places (lazy, built-in list as instant fallback).
 import { searchCities, searchPlaces, loadPlaces, placesReady, onPlaces, parseCoords, norm, popHint, formatCoord } from './cities.js';
 
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -10,12 +10,12 @@ function hl(text, q) {
   return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
 }
 
-export function initSearch({ input, list, spinner, live, onPick }) {
-  let items = [], idx = -1, lastQ = '';
+export function initSearch({ input, list, spinner, live, onPick, sky }) {
+  let items = [], idx = -1, lastQ = '';   // items: the pickable rows in order (sky results, then places); idx indexes it
   const ID = 'sg-';
   input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('aria-controls', list.id);
-  list.setAttribute('aria-label', 'Places');
+  list.setAttribute('aria-label', 'Search results');
 
   function open(v) {
     list.hidden = !v; input.setAttribute('aria-expanded', String(!!v));
@@ -32,29 +32,42 @@ export function initSearch({ input, list, spinner, live, onPick }) {
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { if (!list.hidden) fit(); });
 
   function setSpin(on) { if (spinner) spinner.hidden = !on; }
+  const rowAttrs = (i) => `role="option" id="${ID}${i}" data-i="${i}" aria-selected="${i === idx}" class="${i === idx ? 'act' : ''}"`;
+  function skyRow(it, i, q) {
+    const e = it.e, st = sky.status(e), sub = e.sub.join(' · ');
+    const hint = st.hidden ? '' : `<small class="sg-hint ${st.alt >= 0 ? 'up' : ''}">${st.alt >= 0 ? 'up' : 'below horizon'}</small>`;
+    const main = `<span class="sg-main"><span class="sg-name">${hl(e.title, q)}</span><span class="sg-sub">${esc(st.hidden ? 'Hidden at this epoch' : sub)}</span></span>`;
+    return st.hidden ? `<li role="option" aria-disabled="true" class="sg-off">${main}</li>` : `<li ${rowAttrs(i)}>${main}${hint}</li>`;
+  }
   function row(it, i, q) {
     if (it.kind === 'coords') {
-      return `<li role="option" id="${ID}${i}" data-i="${i}" aria-selected="${i === idx}" class="${i === idx ? 'act' : ''}"><span class="sg-main"><span class="sg-name">Go to coordinates</span><span class="sg-sub num">${formatCoord(it.lat, it.lon)}</span></span></li>`;
+      return `<li ${rowAttrs(i)}><span class="sg-main"><span class="sg-name">Go to coordinates</span><span class="sg-sub num">${formatCoord(it.lat, it.lon)}</span></span></li>`;
     }
     const sub = [it.region, it.country].filter(Boolean).join(', ');
     const via = it.via ? ` <span class="sg-via">(${hl(it.via, q)})</span>` : '';
-    return `<li role="option" id="${ID}${i}" data-i="${i}" aria-selected="${i === idx}" class="${i === idx ? 'act' : ''}"><span class="sg-main"><span class="sg-name">${hl(it.name, q)}${via}</span><span class="sg-sub">${esc(sub)}</span></span>${it.pop ? `<small class="sg-pop num">${popHint(it.pop)}</small>` : ''}</li>`;
+    return `<li ${rowAttrs(i)}><span class="sg-main"><span class="sg-name">${hl(it.name, q)}${via}</span><span class="sg-sub">${esc(sub)}</span></span>${it.pop ? `<small class="sg-pop num">${popHint(it.pop)}</small>` : ''}</li>`;
   }
   function render() {
     const raw = input.value, t = raw.trim();
     if (!t) { items = []; open(false); say(''); return; }
     const c = parseCoords(t);
     const comma = t.indexOf(','), q = norm(comma > 0 ? t.slice(0, comma) : t);
-    let place = placesReady() ? searchPlaces(t, 8) : searchCities(t, 7);
-    if (placesReady() && place.length < 8) {            // built-in extras the worldwide list lacks (poles, research stations)
+    let place = placesReady() ? searchPlaces(t, 6) : searchCities(t, 6);
+    if (placesReady() && place.length < 6) {            // built-in extras the worldwide list lacks (poles, research stations)
       const have = new Set(place.map((p) => norm(p.name)));
-      for (const b of searchCities(t, 8)) if (!have.has(norm(b.name)) && place.length < 8) place.push(b);
+      for (const b of searchCities(t, 6)) if (!have.has(norm(b.name)) && place.length < 6) place.push(b);
     }
-    items = (c ? [{ kind: 'coords', lat: c.lat, lon: c.lon }] : []).concat(place).slice(0, 8);
+    const places = (c ? [{ kind: 'coords', lat: c.lat, lon: c.lon }] : []).concat(place).slice(0, 6);
+    const hits = sky && !c ? sky.search(t, 5) : [];
+    const rows = hits.map((e) => ({ grp: 'sky', e }));
+    items = rows.filter((r) => !sky.status(r.e).hidden).concat(places);
     idx = items.length ? 0 : -1; lastQ = q;
-    list.innerHTML = items.length ? items.map((it, i) => row(it, i, q)).join('')
-      : `<li class="sg-empty" role="presentation">${placesReady() ? 'No place found' : 'Loading all places…'}</li>`;
-    if (items.length && placesReady()) list.insertAdjacentHTML('beforeend', '<li class="sg-credit" role="presentation">Places: GeoNames, CC BY 4.0</li>');
+    let html = '', n = 0;
+    if (rows.length) html += '<li class="sg-group" role="presentation">In the sky</li>' + rows.map((r) => skyRow(r, sky.status(r.e).hidden ? -1 : n++, q)).join('');
+    if (places.length) html += (rows.length ? '<li class="sg-group" role="presentation">On Earth</li>' : '') + places.map((it) => row(it, n++, q)).join('');
+    if (!html) html = `<li class="sg-empty" role="presentation">${placesReady() ? 'No place found' : 'Loading all places…'}</li>`;
+    list.innerHTML = html;
+    if (places.length && placesReady()) list.insertAdjacentHTML('beforeend', '<li class="sg-credit" role="presentation">Places: GeoNames, CC BY 4.0</li>');
     open(true);
     if (items.length && idx >= 0) input.setAttribute('aria-activedescendant', ID + idx);
     say(items.length ? `${items.length} results` : 'No results');
@@ -63,14 +76,15 @@ export function initSearch({ input, list, spinner, live, onPick }) {
   function move(d) {
     if (!items.length) return;
     idx = (idx + d + items.length) % items.length;
-    [...list.children].forEach((li, i) => { li.classList.toggle('act', i === idx); li.setAttribute('aria-selected', String(i === idx)); });
+    const lis = list.querySelectorAll('li[data-i]');
+    lis.forEach((li, i) => { li.classList.toggle('act', i === idx); li.setAttribute('aria-selected', String(i === idx)); });
     input.setAttribute('aria-activedescendant', ID + idx);
-    list.children[idx].scrollIntoView({ block: 'nearest' });
+    lis[idx].scrollIntoView({ block: 'nearest' });
   }
   function pick(it) {
     if (!it) return;
     open(false); input.value = ''; input.blur(); items = [];
-    onPick(it);
+    if (it.grp === 'sky') sky.pick(it.e); else onPick(it);
   }
   function ensureLoaded() {
     if (placesReady()) return;
