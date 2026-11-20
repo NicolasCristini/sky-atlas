@@ -186,6 +186,8 @@ export default [
   {
     id: 'l7.3',
     keys: ['watch.moved', 'watch.c1', 'watch.c2', 'watch.star', 'watch.andromeda', 'watch.lmc', 'watch.last', 'try.wrong', 'tonight.up', 'tonight.lmc', 'tonight.below'],
+    /** The lyrics preview shows only the galaxy the Watch will end on (the same test as in watch()). */
+    watchSkip: (X) => [G.culminationAlt(andromeda(X.kit).dec, X.S.obs.lat) > 8 ? 'watch.lmc' : 'watch.andromeda'],
     placeholders: ['cutoffYear', 'cutoffLy', 'farStars', 'starName', 'starLy', 'ago', 'when', 'andAgo', 'andWhere', 'andSeasonLine', 'lmcWhere'],
     values: (P, kit) => {
       const cut = nowYear() - CUTOFF_YEAR, out = { cutoffYear: String(CUTOFF_YEAR), cutoffLy: N.fmtThousands(cut), andAgo: kit.ui('millionYearsAgo', { n: 2.5 }) };

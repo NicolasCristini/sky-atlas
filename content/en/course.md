@@ -29,6 +29,16 @@ replay: Replay
 
 watchPlay: Watch
 
+ready: Ready
+
+pause: Pause
+
+go: Go
+
+moreDetail: More detail
+
+lessDetail: Less detail
+
 showMe: Show me how
 
 skip: Skip
@@ -357,11 +367,11 @@ success: That is north. You can now point at any direction.
 
 ### The old way {#oldway}
 
-text: The word "zenith" comes from Arabic samt ar-ra's, "the direction of the head". The medieval Latin spelling "cenit" is usually explained by copyists misreading the letter m as "ni". [src:zenith-word] So when you say "zenith", you are using an Arab astronomer's phrase for the point over your head.
+text: The word "zenith" comes from Arabic samt ar-ra's, "the direction of the head". [+The medieval Latin spelling "cenit" is usually explained by copyists misreading the letter m as "ni". [src:zenith-word]+] So when you say "zenith", you are using an Arab astronomer's phrase for the point over your head.
 
 ### Tonight outside {#tonight}
 
-text: Note where the Sun sets tonight. That is roughly west. Stand facing it: north is on your right, south on your left, and east is behind you.
+text: Note where the Sun sets tonight. That is roughly west. Stand facing it: north is on your right, south on your left[+, and east is behind you+].
 
 ## Lesson 1.2 {#l1.2}
 
@@ -371,9 +381,9 @@ hook: Your hand at arm's length is a ruler you always carry.
 
 ### Watch {#watch}
 
-c1: At arm's length, a fist covers about 10° of sky, three middle fingers about 5°, and a little finger about 1°. [src:hand-angles]
+c1: At arm's length, a fist covers about 10° of sky[+, three middle fingers about 5°, and a little finger about 1°+]. [src:hand-angles]
 
-c1b: A spread hand covers 20 to 25°. The Moon is only half a degree wide. [src:hand-angles]
+c1b: A spread hand covers 20 to 25°.[+ The Moon is only half a degree wide.+] [src:hand-angles]
 
 c2: Now count fists up from the horizon to {poleName}.
 
@@ -397,11 +407,11 @@ success: Yes, about {fistsToPole} fists. The pole stands as high as your latitud
 
 ### The old way {#oldway}
 
-text: Arab navigators in the Indian Ocean measured the height of the Pole Star with the kamal, a card on a knotted cord. They counted in isba, or finger-widths, of about 1.6° each. [src:kamal] Your fist does the same job: you are using a very old tool.
+text: Arab navigators in the Indian Ocean measured the height of the Pole Star with the kamal, a card on a knotted cord.[+ They counted in isba, or finger-widths, of about 1.6° each.+] [src:kamal] Your fist does the same job: you are using a very old tool.
 
 ### Tonight outside {#tonight}
 
-north: From {place}, find the Big Dipper. Its two pointer stars are about three fingers apart, around 5°. Hold your hand out at arm's length and check.
+north: From {place}, find the Big Dipper. Its two pointer stars are about three fingers apart[+, around 5°+]. Hold your hand out at arm's length and check.
 
 south: From {place}, find the Southern Cross. Its long axis is about 6°, a little more than three fingers at arm's length. Hold your hand out and check.
 
@@ -423,7 +433,7 @@ c2: Draw a line through the pointers, starting at Merak.
 
 c3: Carry it on for about five times the gap between them.
 
-c4: It lands on Polaris. Polaris is not bright, only around the 50th-brightest star. It matters because it stays put. [src:polaris-rank]
+c4: It lands on Polaris.[+ Polaris is not bright, only around the 50th-brightest star.+] It matters because it stays put. [src:polaris-rank]
 
 c5: Drop a line from Polaris straight down to the horizon: that direction is north.
 
@@ -439,13 +449,13 @@ success: That is Polaris. Straight below it, on the horizon, is north.
 
 ### The old way {#oldway}
 
-text: Greek writers say Phoenician sailors steered by the Little Bear, while Greeks used the Great Bear. Callimachus, quoted by Diogenes Laertius, credits Thales of Miletus with working out the stars of the "Wagon" that the Phoenicians used. Later writers called the constellation the "Phoenician Bear". [src:phoenician-bear]
+text: Greek writers say Phoenician sailors steered by the Little Bear, while Greeks used the Great Bear.[+ Callimachus, quoted by Diogenes Laertius, credits Thales of Miletus with working out the stars of the "Wagon" that the Phoenicians used.+] Later writers called the constellation the "Phoenician Bear". [src:phoenician-bear]
 
 ### Tonight outside {#tonight}
 
 visible: From {place} at {localEveningTime} tonight, the Big Dipper is {dipperWhere}. Find the two pointers at the end of its bowl, follow them about five times their gap, and Polaris is there.
 
-below: From {place} the Big Dipper is below the horizon at {localEveningTime} tonight. Look later in the night, when it has swung round the pole, or on another evening of the year.
+below: From {place} the Big Dipper is below the horizon at {localEveningTime} tonight. Look later in the night[+, when it has swung round the pole,+] or on another evening of the year.
 
 hidden: From {place} Polaris sits very low or below the horizon, so this trick will not work. The next lesson shows the southern way to find south.
 
@@ -467,7 +477,7 @@ c2: Its long axis runs from Gacrux to Acrux.
 
 c3: Carry that line on for about four and a half times its length. It lands near the south celestial pole. [src:crux-pointer]
 
-c4: Two bright stars nearby, Alpha and Beta Centauri, are the Pointers. They help you find the Cross. [src:crux-pointer]
+c4: Two bright stars nearby, Alpha and Beta Centauri, are the Pointers.[+ They help you find the Cross.+] [src:crux-pointer]
 
 c5: Drop a line from the pole straight down to the horizon: that direction is south.
 
@@ -487,7 +497,7 @@ success: You are facing the south celestial pole. Straight below it, on the hori
 
 ### The old way {#oldway}
 
-text: Thousands of years ago the Southern Cross rose in the northern sky, and Ptolemy listed its stars as part of Centaurus. Precession, the slow wobble of Earth's axis, sank them below the horizon of Europe, by about AD 400 across most of it. Europeans met them again in the south: the Venetian Cadamosto noted the Cross off West Africa in 1455. [src:crux-ancient]
+text: Thousands of years ago the Southern Cross rose in the northern sky, and Ptolemy listed its stars as part of Centaurus. Precession, the slow wobble of Earth's axis, sank them below the horizon of Europe[+, by about AD 400 across most of it+].[+ Europeans met them again in the south: the Venetian Cadamosto noted the Cross off West Africa in 1455.+] [src:crux-ancient]
 
 ### Tonight outside {#tonight}
 

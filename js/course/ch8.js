@@ -200,12 +200,12 @@ export default [
       upd();
       await X.say('watch.c1', 3800);
       // ten seconds: the eye's limit climbs from about 3 to about 6 (a simulation, not a measurement)
-      const t0 = performance.now(), total = 10000;
+      const t0 = D.now(), total = 10000;
       const stops = [[0.0, 1], [0.34, 5], [0.67, 12], [1.0, 25]];
       let said = -1;
       for (let u = 0; u < 1;) {
         await D.wait(40);
-        u = clamp((performance.now() - t0) / total, 0, 1);
+        u = clamp((D.now() - t0) / total, 0, 1);
         const e = 1 - Math.pow(1 - u, 2.2);
         lim = 3 + 3 * e; minute = Math.max(1, Math.round(1 + 24 * u)); upd();
         const k = stops.filter(([s]) => u >= s).length - 1;

@@ -80,6 +80,8 @@ export default [
     keys: ['watch.c1', 'watch.flat', 'watch.c2', 'watch.turnN', 'watch.turnS', 'watch.c4', 'try.promptS', 'try.hintS', 'try.successS', 'tonight.north', 'tonight.south'],
     placeholders: [],
     tonightKey: (P) => (P.north ? 'north' : 'south'),
+    /** The lyrics preview shows only this hemisphere's turning line. */
+    watchSkip: (X) => [X.S.obs.lat >= 0 ? 'watch.turnS' : 'watch.turnN'],
     try: (X) => {
       const lat = X.S.obs.lat;
       if (lat >= 10) return selected(HIP.polaris);

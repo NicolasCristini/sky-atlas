@@ -29,6 +29,22 @@ Every lesson must have: `title`, `hook`, `try.prompt`, `try.hint`, `try.success`
 Further keys (`watch.c3`, `try.wrong`, `tonight.north` ...) are listed per lesson in the `keys` array of its JS definition.
 `node tools/check_course.mjs` compares the two and fails on any mismatch.
 
+## Short text and "More detail": `[+ ... +]`
+
+The Learn card shows each lesson text short by default; a "More detail" button shows the full text with the extra parts underlined.
+Wrap a removable part in `[+` and `+]`:
+
+```
+c1: At arm's length, a fist covers about 10° of sky[+, three middle fingers about 5°, and a little finger about 1°+]. [src:hand-angles]
+```
+
+* Short text = the marked parts removed (`...about 10° of sky.`). Full text = everything, the marked parts underlined.
+* Cut only what is a real extra: the short text must still be a complete, correct sentence on its own. Put the punctuation that belongs to the short sentence outside the marks, and a leading comma or dash that belongs to the detail inside.
+* Not nested. May contain `{placeholders}` (whole ones: the marks must not split a `{name}`) and `[src:id]` tags.
+* Allowed only in lesson step texts (`watch.*`, `try.*`, `oldway.*`, `tonight.*`); never in interface strings, chapter or lesson titles, hooks or summaries.
+* A text with no marks is shown as it is in both modes, and the button only appears when the text on screen has a detail.
+* `node tools/check_course.mjs` reports unbalanced or nested marks, marks in the places above, a short text that comes out empty, and a mark that splits a placeholder.
+
 ## What must not be changed when translating
 
 * the `{#ids}` in headings, and the keys (the text before the colon);

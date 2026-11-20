@@ -287,7 +287,7 @@ export default [
       ov.marker(venusAt, { color: 'gold', r: 15 });
       ov.screen(elongationChart({ series, progress: () => clamp(v / span, 0, 1), span: 50, topText: X.ui('eveningStar'), bottomText: X.ui('morningStar'), sunText: X.ui('sunLabel'), valueText: (x) => `${Math.round(Math.abs(x))}°` }));
       D.say(X.T('watch.c3'), 0);
-      const sweep = async (to, ms) => { const v0 = v, t0 = performance.now(); for (let u = 0; u < 1;) { await D.wait(30); u = clamp((performance.now() - t0) / ms, 0, 1); v = v0 + (to - v0) * u; } };
+      const sweep = async (to, ms) => { const v0 = v, t0 = D.now(); for (let u = 0; u < 1;) { await D.wait(30); u = clamp((D.now() - t0) / ms, 0, 1); v = v0 + (to - v0) * u; } };
       await sweep((gw.ms - ge.ms) / DAY, 7000);
       D.say(X.T('watch.c4'), 0);
       await showScene(gw.ms, 'morning');

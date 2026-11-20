@@ -39,10 +39,10 @@ export async function moveToEvening(X, pred, o = {}) {
 
 /** Glide the globe camera to look at a place. */
 export async function aimGlobe(X, lat, lon, dist, ms) {
-  const g = X.S.globe, l0 = g.lat, o0 = g.lon, d0 = g.dist, t0 = performance.now();
+  const g = X.S.globe, l0 = g.lat, o0 = g.lon, d0 = g.dist, t0 = X.D.now();
   for (let u = 0; u < 1;) {
     await X.D.wait(30);
-    u = clamp((performance.now() - t0) / ms, 0, 1);
+    u = clamp((X.D.now() - t0) / ms, 0, 1);
     const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
     g.lat = l0 + (lat - l0) * e; g.lon = o0 + norm180(lon - o0) * e; g.dist = d0 + (dist - d0) * e; g.vLat = g.vLon = 0;
   }

@@ -12,7 +12,35 @@ const PH_RE = /\{([A-Za-z][A-Za-z0-9]*)\}/g;
 
 /** Strip [src:id] tags (the app never shows them). Also tidies the space left in front of punctuation. */
 export const clean = (s) => String(s).replace(SRC_RE, '').replace(/[ \t]+([.,;:!?])/g, '$1').replace(/ {2,}/g, ' ').trim();
-export const sourcesIn = (s) => { const out = []; String(s).replace(SRC_RE, (_, id) => { out.push(id); return ''; }); return out; };
+
+// ---- removable detail: [+ ... +] inside a lesson text. The short ("brief") text drops it; the full text shows it underlined.
+export const DETAIL_RE = /\[\+([\s\S]*?)\+\]/g;
+const DETAIL_ANY = /\[\+[\s\S]*?\+\]/;
+const tidy = (s) => s.replace(/[ \t]+([.,;:!?])/g, '$1').replace(/ {2,}/g, ' ').trim();
+/** True when the text holds at least one [+ ... +] detail. */
+export const hasDetail = (s) => DETAIL_ANY.test(String(s));
+/** The short text: details removed, spacing and punctuation tidied. */
+export const brief = (s) => tidy(String(s).replace(DETAIL_RE, ''));
+/** The full text as plain text: markers removed, details kept. */
+export const plain = (s) => tidy(String(s).replace(DETAIL_RE, '$1'));
+/** The full text as HTML: every part escaped with esc(); every detail wrapped in <u class="lc-more">. */
+export function detailHtml(s, esc) {
+  const str = String(s), parts = []; let last = 0, m;
+  const re = new RegExp(DETAIL_RE.source, 'g');
+  while ((m = re.exec(str))) { parts.push({ d: false, t: str.slice(last, m.index) }); parts.push({ d: true, t: m[1] }); last = m.index + m[0].length; }
+  parts.push({ d: false, t: str.slice(last) });
+  let html = '';
+  for (const p of parts) {
+    if (!p.d) { html += esc(p.t); continue; }
+    const lead = /^\s/.test(p.t) ? ' ' : '', trail = /\s$/.test(p.t) ? ' ' : '', core = p.t.trim();   // spaces stay outside the underline
+    if (!core) { html += lead || trail; continue; }
+    const hug = /^[.,;:!?]/.test(core);   // a detail that opens with punctuation hugs the word before it
+    if (hug) html = html.replace(/ +$/, '');
+    html += `${hug ? '' : lead}<u class="lc-more">${esc(core)}</u>${trail}`;
+  }
+  return html.replace(/ {2,}/g, ' ').replace(/ ([.,;:!?])/g, '$1').trim();
+}
+export const sourcesIn =(s) => { const out = []; String(s).replace(SRC_RE, (_, id) => { out.push(id); return ''; }); return out; };
 export const placeholdersIn = (s) => { const out = new Set(); String(s).replace(PH_RE, (_, k) => { out.add(k); return ''; }); return out; };
 
 /** Replace {name} with values[name]. Unknown names stay as written and are reported through onMissing(name). */

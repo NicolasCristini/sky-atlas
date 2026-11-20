@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as A from '../js/astro.js';
 import * as G from '../js/course/geo.js';
-import { parseCourse, fill, clean, placeholdersIn } from '../js/course/text.js';
+import { parseCourse, fill, clean, placeholdersIn, hasDetail, brief, plain, detailHtml, STEPS } from '../js/course/text.js';
 import * as C from '../js/course/checks.js';
 
 let n = 0, bad = 0;
@@ -111,6 +111,46 @@ ok('fill and clean', () => {
   assert.equal(fill('{a} and {b}', { a: 1, b: 'x' }), '1 and x');
   const miss = []; assert.equal(fill('{a} {zz}', { a: 1 }, (k) => miss.push(k)), '1 {zz}'); assert.deepEqual(miss, ['zz']);
   assert.equal(clean('A claim. [src:kamal] More [src:a-b2].'), 'A claim. More.'); assert.deepEqual([...placeholdersIn('x {a} {b} {a}')], ['a', 'b']);
+});
+
+// ---- [+ detail +] markup
+const escH = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+ok('detail markup: hasDetail, brief and plain', () => {
+  assert.equal(hasDetail('a [+b+] c'), true); assert.equal(hasDetail('a b c'), false); assert.equal(hasDetail('a [+b+] [+c+]'), true);
+  assert.equal(brief('a fist covers 10°[+, three fingers 5°+].'), 'a fist covers 10°.');
+  assert.equal(brief('One. [+Two. +]Three.'), 'One. Three.');
+  assert.equal(brief('A [+b +] c'), 'A c'); assert.equal(brief('x [+, y+].'), 'x.'); assert.equal(brief('no detail here.'), 'no detail here.');
+  assert.equal(plain('a fist covers 10°[+, three fingers 5°+].'), 'a fist covers 10°, three fingers 5°.');
+  assert.equal(plain('One. [+Two. +]Three.'), 'One. Two. Three.'); assert.equal(plain('x [+, y+].'), 'x, y.');
+  assert.equal(brief(''), '');
+});
+ok('detail markup: detailHtml escapes and underlines only the details', () => {
+  assert.equal(detailHtml('a fist covers 10°[+, three <b> & more+].', escH), 'a fist covers 10°<u class="lc-more">, three &lt;b&gt; &amp; more</u>.');
+  assert.equal(detailHtml('One. [+Two. +]Three.', escH), 'One. <u class="lc-more">Two.</u> Three.');
+  assert.equal(detailHtml('x [+, y+].', escH), 'x<u class="lc-more">, y</u>.');
+  assert.equal(detailHtml('plain "text"', escH), 'plain &quot;text&quot;');
+});
+ok('detail markup survives clean: a [src] tag inside a detail, a placeholder inside a detail, same result as the unmarked text', () => {
+  const marked = clean('At arm\'s length a fist covers 10° of sky[+, three middle fingers about 5° [src:hand-angles]+]. [src:other]');
+  assert.equal(marked, 'At arm\'s length a fist covers 10° of sky[+, three middle fingers about 5°+].');
+  assert.equal(brief(marked), 'At arm\'s length a fist covers 10° of sky.');
+  assert.equal(plain(marked), clean('At arm\'s length a fist covers 10° of sky, three middle fingers about 5° [src:hand-angles]. [src:other]'));
+  const ph = fill(clean('From {place}[+, where the pole is {poleAlt}° up [src:x]+].'), { place: 'Rome', poleAlt: 42 });
+  assert.equal(ph, 'From Rome[+, where the pole is 42° up+].'); assert.equal(brief(ph), 'From Rome.'); assert.equal(plain(ph), 'From Rome, where the pole is 42° up.');
+  assert.equal(clean('a [+ b +] c'), 'a [+ b +] c');
+});
+ok('every lesson text in course.md has balanced, non-nested [+ +] markers, only in lesson step texts, and a non-empty short text', () => {
+  const r = parseCourse(fs.readFileSync(new URL('../content/en/course.md', import.meta.url), 'utf8')), balanced = (t) => { let open = false; for (const m of t.matchAll(/\[\+|\+\]/g)) { if (m[0] === '[+') { if (open) return false; open = true; } else { if (!open) return false; open = false; } } return !open; };
+  const marks = (t) => /\[\+|\+\]/.test(t || '');
+  for (const [k, v] of Object.entries(r.ui)) assert.ok(!marks(v), `ui.${k} has markers`);
+  for (const c of r.chapters) {
+    assert.ok(!marks(c.title) && !marks(c.summary), `${c.id} title/summary has markers`);
+    for (const l of c.lessons) for (const [k, v] of Object.entries(l.keys)) {
+      if (k === 'title' || k === 'hook') { assert.ok(!marks(v), `${l.id} ${k} has markers`); continue; }
+      assert.ok(balanced(v), `${l.id} ${k}: unbalanced or nested markers`); assert.ok(!marks(v) || STEPS.some((s) => k.startsWith(s + '.')), `${l.id} ${k}: markers outside a step text`);
+      assert.ok(brief(clean(v)).length > 0, `${l.id} ${k}: empty once the details are removed`);
+    }
+  }
 });
 
 // ---- the Try checkers, against a fake lesson context

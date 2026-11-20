@@ -58,6 +58,26 @@ Useful on `X` (all in `js/course/kit.js`): `T(key, extra)` / `say(key, ms, extra
 Chapters 3 and 4 add: `yearAt(hour)` / `setYd(days)` / `tweenYear(days, ms)` (Year mode: the sky at one local hour, seasons sliding by; **in Year mode the instant is `S.time + S.yd * 864e5`, use `altAt`, not `hip`**), `setClock(ms)`, `dateNow()`, `star(hip)` ({ra, dec}), and on the kit `kit.sunCons(ms)` (astronomy-engine), `kit.dateText`, `kit.list`. `X.D` is the quick-lesson demo
 toolkit from `js/lessonui.js` (`prep`, `toSky`, `slew`, `wait`, `travel`, `layer`, `highlight`, `until`, `midAz`, `fovFor` ...).
 
+**The lyrics window.** During Watch the card lists every caption of the step with the current one highlighted. The list is built from the `### Watch` keys in
+course.md order (preceded by the lesson hook); a branch key the script does not say (for example `watch.flat` when `watch.c3` was said) is dropped automatically as the
+demo plays. Captions said through `X.say(key)` or `D.say(X.T(key, ...))` are matched to their line by key; anything else is matched by its text or added as an extra line.
+The preview leaves out lines that would mislead a reader looking ahead; they appear when said: `watch.away`, `watch.moved` and `watch.flat` (only said in some
+places), lines whose live values are not known before the demo runs (a star name filled in by `X.say(key, ms, extra)`), and the branch a lesson declares this
+place will not take: `watchSkip: (X) => ['watch.turnS']`. A lesson whose Watch says one of two lines depending on the place should declare `watchSkip`.
+
+**The text window and the control card.** `#lcard` is a transparent wrapper with two glass panels: the text window `.lc-read` (the words: caption or lyrics, the note,
+and a slim bar with the one Expand / Reduce button) sits above the control card `.lc-main` (title, step bar, choices, the Try's small tool, buttons). The text window
+is hidden when there is nothing to read. Texts may carry `[+ ... +]` details (content/README.md): `text.js` has `brief`, `plain`, `hasDetail` and `detailHtml`, learn.js has one
+view toggle (`expanded`, remembered in `skyatlas.learn.view` as `expanded` | `reduced`, label "More detail" / "Less detail", class `lc-exp` on `#lcard`). Reduced shows the
+short text, and on the Watch only three lines: the lit one with one line above and one below (decided in JS, class `ly-out`). Expanded shows all the text with the details
+underlined and the whole lyrics list auto-scrolled to the lit line; it can be toggled any number of times. The button is always there on the Watch, and on other steps
+only when the shown text has details. Both panels are liquid glass (semi-transparent, blurred sky behind; opaque fallback without backdrop-filter or with reduced transparency). `X.T` / `X.preview` keep the marks so lyric lines can be matched by text.
+
+**Ready, Pause, Go.** The Watch does not start by itself: it shows the whole lyrics list and a gold **Ready** button, which turns into a Pause / Go toggle (Replay at the end).
+`P.pace` is `idle | play | pause | done`; `__learn.play()` is what Ready does. Pause calls `engine.pause()` (js/lessonui.js): the demo clock `D.now()` and the sky clock stop, so
+`D.wait`, `D.until`, `D.tweenQ`, `X.tweenTime` and `X.tweenYear` hold. **A script that times its own animation should measure with `D.now()`, not `performance.now()`** (a loop on
+`performance.now()` keeps running through a pause). Slews, trips and overlay draw-ons already under way finish: the pause is soft.
+
 **Hemisphere rule.** A lesson uses the user's own place when the thing is visible there. When it is not (Polaris from Sydney), the demo says so in a caption
 (`watch.away` uses `{awayPlace}`), travels with `X.goTo(...)`, and the `### Tonight outside` text gives the honest local version through `tonightKey(P)`.
 
@@ -100,4 +120,4 @@ Gold is the active construction, pale blue the reference. Everything has a draw-
 3. `node tools/check_course.mjs && node tests/course.test.mjs` (add node tests for any new pure maths in `geo.js`).
 4. Browser: for each lesson, from a northern and a southern place: Watch runs, graphics sit on the right stars, Try succeeds by hand and with "Show me how", Exit restores the Explore state
    (`tests/learn.harness.js` automates a pass: `__L.run('l3.1')`).
-5. Phones: the card must stay within about 140 px (long texts scroll inside it).
+5. Phones: the card is at most 40% of the screen height (the Watch step shows the full caption list, scrolling like lyrics; other long texts scroll inside the card).

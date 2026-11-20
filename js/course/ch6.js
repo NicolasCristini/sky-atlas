@@ -18,10 +18,10 @@ const homeLat = (X) => (X.kit.home ? X.kit.home.lat : X.S.obs.lat);
 function agesAt(X, E) { if (X.S.tm !== 'ages') X.D.timeMode('ages'); X.a.setYears(E - X.S.ages.baseYear); }
 /** Glide the Ages epoch to a year (stops at once when the step is cancelled). tick() runs every step. */
 async function agesTween(X, E, ms, tick) {
-  const { S, a, D } = X, y0 = S.ages.years, y1 = E - S.ages.baseYear, t0 = performance.now();
+  const { S, a, D } = X, y0 = S.ages.years, y1 = E - S.ages.baseYear, t0 = D.now();
   for (let u = 0; u < 1;) {
     await D.wait(30);
-    u = clamp((performance.now() - t0) / ms, 0, 1);
+    u = clamp((D.now() - t0) / ms, 0, 1);
     a.setYears(y0 + (y1 - y0) * ease(u));
     if (tick) tick();
   }
@@ -339,7 +339,7 @@ export default [
         ov.text(topPoint(X), () => formatYear(Ey).text, { color: 'gold', size: 18 });
         const drift = (E) => { Ey = E; X.sky.setEpoch(E - 2000, st.pmra, st.pmdec); };
         await D.wait(3000);
-        const sweep = async (to, ms) => { const e0 = Ey, t0 = performance.now(); for (let u = 0; u < 1;) { await D.wait(60); u = clamp((performance.now() - t0) / ms, 0, 1); drift(e0 + (to - e0) * ease(u)); } };
+        const sweep = async (to, ms) => { const e0 = Ey, t0 = D.now(); for (let u = 0; u < 1;) { await D.wait(60); u = clamp((D.now() - t0) / ms, 0, 1); drift(e0 + (to - e0) * ease(u)); } };
         D.say(X.T('watch.c4'), 0);
         await sweep(-100000, 6500);
         await D.wait(1500);

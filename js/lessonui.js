@@ -245,6 +245,7 @@ export function initLessons(a) {
     };
   }
   function cancelRun() {
+    clearPause();
     if (run) run.cancel = true;
     if (S.travel) S.travel.dur = 1;                   // a trip in flight lands at once
     if (S.ages.tween) S.ages.tween = null;
@@ -297,9 +298,13 @@ export function initLessons(a) {
 
   // ---------------------------------------------------------------- the demo toolkit (what the scripts in lessons.js call)
   const chk = () => { if (!run || run.cancel) throw CANCEL; };
+  // The demo clock: performance.now() minus the time spent paused (Learn's Pause / Go). Inert until engine.pause() is called, so Explore's quick lessons never see a difference.
+  let pausedAt = 0, pausedTotal = 0, pauseHeld = null;
+  const dnow = () => (pausedAt || performance.now()) - pausedTotal;
+  const clearPause = () => { pausedAt = 0; pauseHeld = null; };   // pausedTotal is never reduced: the demo clock only moves forward
   const wait = (ms) => new Promise((res, rej) => {
-    const r = run, t0 = performance.now();
-    const id = setInterval(() => { if (!r || r.cancel) { clearInterval(id); rej(CANCEL); } else if (performance.now() - t0 >= ms) { clearInterval(id); res(); } }, 40);
+    const r = run, t0 = dnow();
+    const id = setInterval(() => { if (!r || r.cancel) { clearInterval(id); rej(CANCEL); } else if (dnow() - t0 >= ms) { clearInterval(id); res(); } }, 40);
   });
   const hours = (h) => h * 3600e3;
   const polar = (alt, az) => ({ alt, az });
@@ -310,9 +315,9 @@ export function initLessons(a) {
   }
   const D = {
     S, A, a, L: () => { lKey = ''; return buildL(); }, phone: false,
-    wait,
+    wait, now: dnow,
     async say(text, ms = 2600) { chk(); caption = text; renderBody(); if (onCap) onCap(text); if (ms > 0) await wait(ms); },
-    async until(pred, maxMs = 8000) { const t0 = performance.now(); while (!pred() && performance.now() - t0 < maxMs) await wait(60); },
+    async until(pred, maxMs = 8000) { const t0 = dnow(); while (!pred() && dnow() - t0 < maxMs) await wait(60); },
     async settle() { while (S.trans || S.travel) await wait(50); },
     async prep(o = {}) {
       chk();
@@ -354,11 +359,11 @@ export function initLessons(a) {
       } finally { S.playing = false; S.speed = kind === 'year' ? S.speedBy.year : 1; a.syncPlay(); }
     },
     async tweenQ(to, ms) {
-      chk(); const q0 = S.q, t0 = performance.now(), dur = reduced ? ms * 0.3 : ms;
+      chk(); const q0 = S.q, t0 = dnow(), dur = reduced ? ms * 0.3 : ms;
       await new Promise((res, rej) => {
         const step = () => {
           if (!run || run.cancel) { rej(CANCEL); return; }
-          const u = clamp((performance.now() - t0) / dur, 0, 1), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+          const u = clamp((dnow() - t0) / dur, 0, 1), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
           S.q = q0 + (to - q0) * e; a.syncSkyUI();
           if (u >= 1) res(); else requestAnimationFrame(step);
         };
@@ -430,6 +435,7 @@ export function initLessons(a) {
     else { await settleRaw(); }
     D.phone = isPhone();
     snap = takeSnap();
+    clearPause();
     const r = run = { cancel: false };
     caption = ''; tipIdx = -1;
     if (!st.seen.includes(st.cur)) { st.seen.push(st.cur); save(); }
@@ -456,21 +462,25 @@ export function initLessons(a) {
     /** Snapshot the user's sky (once: a second call while held keeps the first snapshot). */
     async begin() { if (restoring) return; if (!snap) { if (run) cancelRun(); await settleRaw(); snap = takeSnap(); } return snap; },
     /** Restore the snapshot. opts as restore(): { instant, keepPlace }. */
-    async end(opts = { instant: true }) { cancelRun(); run = null; await restore(opts); onCap = null; },
+    async end(opts = { instant: true }) { cancelRun(); run = null; clearPause(); await restore(opts); onCap = null; },
     /** Run a script against the demo toolkit. hooks.onCaption(text) mirrors D.say / D.play captions. Resolves true if it finished, false if cancelled. */
     async runScript(fn, hooks = {}) {
       if (restoring) return false;
       if (run) cancelRun();
       await settleRaw();
-      D.phone = isPhone(); onCap = hooks.onCaption || null; caption = '';
+      D.phone = isPhone(); onCap = hooks.onCaption || null; caption = ''; clearPause();
       const r = run = { cancel: false };
       try { await fn(D); } catch (e) { if (e !== CANCEL) { console.error(e); } return false; }
-      finally { if (run === r) { run = null; S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); } }
+      finally { if (run === r) { run = null; clearPause(); S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); } }
       return !r.cancel;
     },
     cancel() { cancelRun(); },
+    /** Learn's Pause: the demo clock (D.now, D.wait, D.until, the tweens) and the sky clock stop; Go resumes. Animations already under way (slews, trips, drawn overlays) simply finish. */
+    pause() { if (pausedAt || !run || run.cancel) return; pausedAt = performance.now(); pauseHeld = { playing: S.playing, speed: S.speed }; S.playing = false; a.syncPlay(); },
+    resume() { if (!pausedAt) return; pausedTotal += performance.now() - pausedAt; pausedAt = 0; const h = pauseHeld; pauseHeld = null; if (h && h.playing) { S.speed = h.speed; S.playing = true; a.syncPlay(); } },
+    get paused() { return !!pausedAt; },
     /** Stop whatever is moving without restoring: a lesson step ended. */
-    stop() { if (run) { run.cancel = true; } if (S.travel) S.travel.dur = 1; S.ages.tween = null; S.slew = null; S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); },
+    stop() { clearPause(); if (run) { run.cancel = true; } if (S.travel) S.travel.dur = 1; S.ages.tween = null; S.slew = null; S.playing = false; if (S.speed > 1 && S.tm === 'day') S.speed = 1; a.syncPlay(); },
     clock: { get: () => ({ playing: S.playing, speed: S.speed }) },
     setQuickVisible(v) { st.visible = v; render(); },
   };

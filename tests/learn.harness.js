@@ -2,6 +2,7 @@
 //   await import('/tests/learn.harness.js?x=' + Date.now());
 //   __L.fast();                      // optional: drive animation with timers (useful when the tab is hidden and rAF is throttled)
 //   __L.run('l1.1');                 // starts a full pass of one lesson; poll __R['l1.1'].phase until 'done'
+// The Watch starts when the learner taps Ready: the harness calls __learn.play() after start().
 // A pass: Watch to the end, Try via "Show me how", Old way, Tonight, Exit; then compares the Explore state before and after.
 window.__errs = window.__errs || [];
 addEventListener('error', (e) => __errs.push('E:' + e.message));
@@ -18,7 +19,7 @@ window.__L = {
     return { mode: S.mode, lat: +S.obs.lat.toFixed(4), lon: +S.obs.lon.toFixed(4), g: [S.globe.lat, S.globe.lon, S.globe.dist].map((v) => +v.toFixed(2)).join(','), sky: [S.sky.az, S.sky.alt, S.sky.fov].map((v) => +v.toFixed(2)).join(','), tm: S.tm, yd: S.yd, speed: S.speed, playing: S.playing, keep: S.keepLocal, layers: JSON.stringify(S.layers), q: S.q, expo: S.expo, sel: S.sel ? S.sel.type : null };
   },
   watchTo: async function (id, re, extra = 2500, max = 40000) {
-    await __learn.start(id, 0); const t = document.querySelector('#lcard .lc-text'), caps = [];
+    await __learn.start(id, 0); await __learn.play(); const t = document.querySelector('#lcard .lc-text'), caps = [];   // the Watch waits for Ready: play() is what tapping it does
     await until(() => { if (caps[caps.length - 1] !== t.textContent) caps.push(t.textContent); return re.test(t.textContent); }, max); await sleep(extra); return { t: t.textContent, caps };
   },
   async runAll(ids) { window.__allDone = false; for (const id of ids) { try { await this.run(id); } catch (e) { (window.__R[id] = window.__R[id] || {}).crash = String((e && e.stack) || e); window.__R[id].phase = 'crash'; try { await __learn.exit(); } catch (_) { /* ignore */ } await sleep(4000); } } window.__allDone = true; },
@@ -29,7 +30,7 @@ window.__L = {
     const mo = new MutationObserver(() => { if (out.phase === 'watch') out.watchCaps.push(txt.textContent); }); mo.observe(txt, { childList: true, characterData: true, subtree: true });
     out.maxH = 0; const card = document.getElementById('lcard'), ro = new ResizeObserver(() => { out.maxH = Math.max(out.maxH, Math.round(card.getBoundingClientRect().height)); }); ro.observe(card);
     out.phase = 'watch'; const t0 = performance.now();
-    await __learn.start(id, 0);
+    await __learn.start(id, 0); await __learn.play();
     out.watchDone = await until(() => !__learn.P.watching, 150000); out.watchSecs = Math.round((performance.now() - t0) / 1000);
     out.phase = 'try'; __learn.step(1);
     await until(() => __learn.P.chk && (__learn.P.chk.kind === 'choice' ? __learn.P.hintTimer : __learn.P.poll), 60000); await sleep(500);

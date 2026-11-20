@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const lang = process.argv[2] || 'en';
-const { parseCourse, GLOBAL_PLACEHOLDERS, UI_PLACEHOLDERS, placeholdersIn, sourcesIn, STEPS } = await import(pathToFileURL(path.join(root, 'js/course/text.js')));
+const { parseCourse, GLOBAL_PLACEHOLDERS, UI_PLACEHOLDERS, placeholdersIn, sourcesIn, STEPS, hasDetail, brief, clean } = await import(pathToFileURL(path.join(root, 'js/course/text.js')));
 const { CHAPTERS } = await import(pathToFileURL(path.join(root, 'js/course/index.js')));
 
 const problems = [], notes = [];
@@ -31,9 +31,29 @@ const checkText = (where, text, allowed) => {
   if (/[{}]/.test(stripped.replace(/\{[A-Za-z][A-Za-z0-9]*\}/g, ''))) bad(`${where}: stray brace`);
 };
 
+// ---- [+ detail +] markers: balanced, not nested, only in lesson step texts; the short text must survive; a marker must not split a {placeholder}
+const MARK_RE = /\[\+|\+\]/g;
+const checkMarks = (where, text, allowed) => {
+  const has = /\[\+|\+\]/.test(text);
+  if (has && !allowed) { bad(`${where}: [+ +] detail markers are only allowed in lesson step texts`); return; }
+  if (!has) return;
+  let open = false, balanced = true;
+  for (const m of text.matchAll(MARK_RE)) {
+    if (m[0] === '[+') { if (open) { bad(`${where}: nested [+`); balanced = false; break; } open = true; }
+    else { if (!open) { bad(`${where}: +] without a matching [+`); balanced = false; break; } open = false; }
+  }
+  if (balanced && open) { bad(`${where}: [+ is never closed`); balanced = false; }
+  if (!balanced) return;
+  if (!brief(clean(text))) bad(`${where}: nothing is left once the [+ +] details are removed`);
+  for (const m of text.matchAll(/\[\+([\s\S]*?)\+\]/g)) {
+    const inner = m[1], pre = text.slice(0, m.index), post = text.slice(m.index + m[0].length);
+    if (/\{[A-Za-z0-9]*$/.test(pre) || /^[A-Za-z0-9]*\}/.test(post) || /\{[^}]*$/.test(inner) || /^[^{]*\}/.test(inner)) bad(`${where}: a [+ +] marker splits a {placeholder}`);
+  }
+};
+
 // ---- ui
 const uiAllowed = new Set(UI_PLACEHOLDERS);
-for (const [k, v] of Object.entries(course.ui)) { if (!v) bad(`ui.${k}: empty`); checkText(`ui.${k}`, v, uiAllowed); }
+for (const [k, v] of Object.entries(course.ui)) { if (!v) bad(`ui.${k}: empty`); checkText(`ui.${k}`, v, uiAllowed); checkMarks(`ui.${k}`, v, false); }
 
 // ---- chapters and lessons
 const IMPLICIT = ['title', 'hook', 'try.prompt', 'try.hint', 'try.success', 'oldway.text'];
@@ -43,6 +63,7 @@ for (const jc of CHAPTERS) {
   const mc = course.chapters.find((c) => c.id === jc.id);
   if (!mc) { bad(`chapter ${jc.id} is in js/course/index.js but not in course.md`); continue; }
   checkText(`${jc.id} title`, mc.title, new Set()); checkText(`${jc.id} summary`, mc.summary, new Set());
+  checkMarks(`${jc.id} title`, mc.title, false); checkMarks(`${jc.id} summary`, mc.summary, false);
   const jsIds = jc.lessons.map((l) => l.id);
   for (const ml of mc.lessons) if (!jsIds.includes(ml.id)) bad(`course.md has lesson ${ml.id} but js/course/ch${jc.n}.js does not define it`);
   jc.lessons.forEach((jl, idx) => {
@@ -59,7 +80,8 @@ for (const jc of CHAPTERS) {
     if (typeof jl.watch !== 'function') bad(`${jl.id}: no watch(X) function`);
     if (!jl.try) bad(`${jl.id}: no try checker`);
     const allowed = new Set([...GLOBAL_PLACEHOLDERS, ...(jl.placeholders || [])]);
-    for (const [k, v] of Object.entries(ml.keys)) checkText(`${jl.id} ${k}`, v, allowed);
+    checkMarks(`${jl.id} title`, ml.title, false); checkMarks(`${jl.id} hook`, ml.hook || '', false);
+    for (const [k, v] of Object.entries(ml.keys)) { checkText(`${jl.id} ${k}`, v, allowed); if (k === 'title' || k === 'hook') continue; checkMarks(`${jl.id} ${k}`, v, STEPS.some((st) => k.startsWith(st + '.'))); }
   });
 }
 for (const jc of CHAPTERS) if (jc.lessons.length === 0 && jc.status === 'active') notes.push(`chapter ${jc.id} has no lessons yet (shown as "coming soon")`);

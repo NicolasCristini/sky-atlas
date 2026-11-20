@@ -6,6 +6,8 @@ import { placeName, byName } from '../cities.js';
 import { classifyConstellations } from '../explainer.js';
 
 const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
+/** How long a line needs on screen to be read: 1 s to find it, then about 230 words a minute; never under 2.2 s. To be retuned with the voiceover. */
+export const readMs = (t) => Math.max(2200, 1000 + 260 * String(t).replace(/\[\+|\+\]/g, ' ').split(/\s+/).filter(Boolean).length);
 
 // cities the Watch step may travel to when the user's own sky cannot show the thing (nearest in longitude wins)
 const AWAY = {
@@ -88,6 +90,8 @@ export function createKit(a, engine, ov, getCourse) {
   kit.consId = (name) => { const c = data.cons.find((x) => x.name === name); return c ? c.id : null; };
 
   kit.valuesFor = (lesson, P) => ({ ...kit.baseValues(P), ...(lesson && lesson.values ? lesson.values(P, kit) : {}) });
+  /** Reading time of a caption as the learner sees it (learn.js sets kit.readText to the short or full text, per the view). */
+  kit.readFor = (t) => readMs(kit.readText ? kit.readText(t) : t);
 
   // ---------------------------------------------------------------- the lesson context X
   kit.makeX = (lesson) => {
@@ -103,11 +107,26 @@ export function createKit(a, engine, ov, getCourse) {
         const raw = L && L.keys[key];
         if (raw === undefined) { console.warn(`missing course text ${lesson.id} ${key}`); return ''; }
         const P = key.startsWith('tonight') ? kit.homeCtx() : kit.live();
-        return clean(fill(raw, { ...kit.valuesFor(lesson, P), ...(extra || {}) }, (k) => console.warn(`${lesson.id} ${key}: no value for {${k}}`)));
+        const out = clean(fill(raw, { ...kit.valuesFor(lesson, P), ...(extra || {}) }, (k) => console.warn(`${lesson.id} ${key}: no value for {${k}}`)));
+        kit.lastT = { key, text: out };   // lets the lyrics list tie a caption said as D.say(X.T(key, extra)) back to its key
+        return out;
+      },
+      /** Like T, for a lyrics preview: never warns. Returns '' when a placeholder has no value yet (or an empty one): such a line is only shown once it is said. */
+      preview(key) {
+        const L = course().chapters.flatMap((c) => c.lessons).find((l) => l.id === lesson.id);
+        const raw = L && L.keys[key];
+        if (raw === undefined) return '';
+        let vals = {};
+        try { vals = kit.valuesFor(lesson, key.startsWith('tonight') ? kit.homeCtx() : kit.live()); } catch (e) { vals = {}; }
+        let missing = false;
+        const out = fill(raw, vals, () => { missing = true; });
+        if (missing || [...String(raw).matchAll(/\{([A-Za-z][A-Za-z0-9]*)\}/g)].some((m) => vals[m[1]] === '')) return '';
+        return clean(out);
       },
       has(key) { const L = course().chapters.flatMap((c) => c.lessons).find((l) => l.id === lesson.id); return !!(L && L.keys[key] !== undefined); },
       /** Say a text key as the current caption, for ms (0 = leave it up). */
-      say: (key, ms = 3200, extra) => D.say(X.T(key, extra), ms),
+      /** A caption stays up as long as it takes to read the text the learner sees (readMs of kit.readText(t): short or full text), whatever ms the script wrote; ms 0 still means "leave it up", and o.exact keeps ms as given. */
+      say: (key, ms = 3200, extra, o) => { const t = X.T(key, extra); if (kit.onSay) kit.onSay(key, t); return D.say(t, ms > 0 && !(o && o.exact) ? kit.readFor(t) : ms); },
       get home() { return kit.home; },
       here: () => ({ lat: S.obs.lat, lon: S.obs.lon, place: kit.placeShort(S.obs.lat, S.obs.lon) }),
       hip: (h) => D.hipAltAz(h),
@@ -142,13 +161,17 @@ export function createKit(a, engine, ov, getCourse) {
       /** Run the clock fast for ms, optionally keeping a star mid-screen and stepping through caption keys. */
       async lapse(speed, ms, o = {}) {
         const lines = o.lines || [];
+        // each caption is held long enough to read; the clock runs slower in proportion, so the sky still covers the same span of time
+        const holds = lines.map((k) => kit.readFor(X.T(k)));
+        const total = holds.reduce((s, h) => s + h, 0);
+        if (total > 0) speed = speed * ms / total;
         S.speed = speed; S.playing = true; a.syncPlay();
         const id = o.follow ? setInterval(() => {
           const aa = X.hip(o.follow), s = S.sky; S.slew = null;
           s.az = A.norm360(s.az + A.norm180(aa.az - s.az) * 0.18); s.alt += (clamp(aa.alt, 8, 80) - s.alt) * 0.18;
         }, 40) : 0;
         try {
-          if (lines.length) { for (const k of lines) await X.say(k, ms / lines.length); } else await D.wait(ms);
+          if (lines.length) { for (let i = 0; i < lines.length; i++) await X.say(lines[i], holds[i], undefined, { exact: true }); } else await D.wait(ms);
         } finally { clearInterval(id); S.playing = false; S.speed = 1; a.syncPlay(); }
       },
       /** Move the clock on by `hours` at one hour per second and stop exactly there. */
@@ -158,12 +181,12 @@ export function createKit(a, engine, ov, getCourse) {
         try { await D.until(() => S.time >= target - 1, 8000); } finally { S.playing = false; S.speed = 1; a.syncPlay(); }
         S.time = target; S.anchor = target; a.updateCelestial(true);
       },
-      /** Glide the clock to an instant (stops at once when the step is cancelled: D.wait throws). */
+      /** Glide the clock to an instant (stops at once when the step is cancelled: D.wait throws; holds while Learn is paused: D.now stands still). */
       async tweenTime(target, ms = 2400) {
-        const t0 = S.time, t = performance.now();
+        const t0 = S.time, t = D.now();
         for (let u = 0; u < 1;) {
           await D.wait(30);
-          u = clamp((performance.now() - t) / ms, 0, 1);
+          u = clamp((D.now() - t) / ms, 0, 1);
           const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
           S.time = t0 + (target - t0) * e; S.anchor = S.time; a.updateCelestial(true);
         }
@@ -189,10 +212,10 @@ export function createKit(a, engine, ov, getCourse) {
       setYd(v) { S.yd = v; a.updateCelestial(true); },
       /** Glide the year slider to a day offset (may pass beyond +-183). Stops when the step is cancelled. */
       async tweenYear(target, ms = 2400) {
-        const y0 = S.yd, t = performance.now();
+        const y0 = S.yd, t = D.now();
         for (let u = 0; u < 1;) {
           await D.wait(30);
-          u = clamp((performance.now() - t) / ms, 0, 1);
+          u = clamp((D.now() - t) / ms, 0, 1);
           const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
           S.yd = y0 + (target - y0) * e; a.updateCelestial(true);
         }

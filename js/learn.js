@@ -1,10 +1,10 @@
 // The Learn area: a course in chapters (home sheet) and a lesson player (Watch, Try, The old way, Tonight outside) over the live sky.
 // Text: content/<lang>/course.md (js/course/text.js parses it). Lesson logic: js/course/chN.js. Framework docs: js/course/README.md.
 // Explore state: the quick-lesson engine in lessonui.js snapshots the user's sky when a lesson starts and restores it when they leave.
-import { loadCourse } from './course/text.js';
+import { loadCourse, clean, hasDetail, brief, plain, detailHtml } from './course/text.js';
 import { CHAPTERS } from './course/index.js';
 import { createOverlay } from './course/overlay.js';
-import { createKit } from './course/kit.js';
+import { createKit, readMs } from './course/kit.js';
 import { SLIDER_MAX, sliderToYears, yearsToSlider, formatYear } from './ages.js';
 import { attachNight } from './course/nightsky.js';
 
@@ -12,6 +12,10 @@ const $ = (s) => document.querySelector(s);
 const body = document.body, root = document.documentElement;
 const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEY = 'skyatlas.learn';
+const VIEW_KEY = 'skyatlas.learn.view';      // 'expanded' | 'reduced'
+const DET_KEY = 'skyatlas.learn.detail';     // old key, read once as the first value when VIEW_KEY is absent
+/** Watch keys that by convention are only said in some places (travelling away, moving the clock, the pole on the horizon at the equator). */
+const LYR_MAYBE = ['watch.away', 'watch.moved', 'watch.flat'];
 const STEP_KEYS = ['watch', 'try', 'oldway', 'tonight'];
 const STEP_UI = ['stepWatch', 'stepTry', 'stepOldway', 'stepTonight'];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -19,6 +23,10 @@ const ICON = {
   x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
   next: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  down: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  up: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
+  pause: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4.5" width="4.2" height="15" rx="1.2"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1.2"/></svg>',
   tick: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
 };
 
@@ -137,36 +145,71 @@ async function boot(a, engine) {
   const firstOpenStep = (id) => { const s = stepsOf(id); for (let i = 0; i < 4; i++) if (!s.includes(i)) return i; return 0; };
 
   // ---------------------------------------------------------------- the lesson card
+  // #lcard is a transparent wrapper with two glass panels: the text window (.lc-read: the words, the Expand / Reduce button) above the control card (.lc-main).
   const card = document.createElement('section');
-  card.id = 'lcard'; card.className = 'panel'; card.hidden = true; card.tabIndex = -1; card.setAttribute('role', 'region');
-  card.innerHTML = `<div class="lc-top"><span class="lc-no num"></span><span class="lc-title"></span><span class="lc-step"></span><button type="button" class="lc-exit" data-a="exit"></button></div>
-    <ol class="lc-prog"></ol>
-    <div class="lc-body" aria-live="polite" aria-atomic="true"><p class="lc-text"></p><p class="lc-note"></p><div class="lc-opts" role="group"></div></div>
-    <div class="lc-tool" hidden></div>
-    <div class="lc-ctl"></div>`;
+  card.id = 'lcard'; card.hidden = true; card.tabIndex = -1; card.setAttribute('role', 'region');
+  card.innerHTML = `<div class="lc-read panel lc-read-empty">
+      <div class="lc-readbar" hidden><button type="button" class="lc-view" data-a="view" hidden></button></div>
+      <div class="lc-body"><p class="lc-text" aria-live="polite" aria-atomic="true"></p><ol class="lc-lyrics" hidden></ol><p class="lc-note" aria-live="polite"></p></div>
+    </div>
+    <div class="lc-main panel">
+      <div class="lc-top"><span class="lc-no num"></span><span class="lc-title"></span><span class="lc-step"></span><button type="button" class="lc-exit" data-a="exit"></button></div>
+      <ol class="lc-prog"></ol>
+      <div class="lc-opts" role="group"></div>
+      <div class="lc-tool" hidden></div>
+      <div class="lc-ctl"></div>
+    </div>`;
   body.appendChild(card);
-  const el = { no: card.querySelector('.lc-no'), title: card.querySelector('.lc-title'), step: card.querySelector('.lc-step'), prog: card.querySelector('.lc-prog'), text: card.querySelector('.lc-text'), note: card.querySelector('.lc-note'), opts: card.querySelector('.lc-opts'), tool: card.querySelector('.lc-tool'), ctl: card.querySelector('.lc-ctl'), exit: card.querySelector('.lc-exit') };
+  const el = { read: card.querySelector('.lc-read'), readbar: card.querySelector('.lc-readbar'), view: card.querySelector('.lc-view'), no: card.querySelector('.lc-no'), title: card.querySelector('.lc-title'), step: card.querySelector('.lc-step'), prog: card.querySelector('.lc-prog'), text: card.querySelector('.lc-text'), note: card.querySelector('.lc-note'), opts: card.querySelector('.lc-opts'), body: card.querySelector('.lc-body'), lyrics: card.querySelector('.lc-lyrics'), tool: card.querySelector('.lc-tool'), ctl: card.querySelector('.lc-ctl'), exit: card.querySelector('.lc-exit') };
 
-  // The card covers the bottom of the sky. Shift the view up by half the covered height (a camera view offset: projection, picking and labels all
+  // The card (text window + control card) covers the bottom of the sky. Shift the view up by half the covered height (a camera view offset: projection, picking and labels all
   // follow) so what a lesson frames sits in the free part of the screen. Measured when a lesson starts and on resize, so it never jumps mid-lesson.
   let offKey = '';
   function applyViewOffset(force) {
     const cam = a.cam, W = window.innerWidth, H = window.innerHeight;
-    let dy = 0;
-    if (P.active && !card.hidden && !root.classList.contains('land')) {
+    let dy = 0, dx = 0;
+    if (P.active && !card.hidden) {
       const r = card.getBoundingClientRect();
-      if (r.height > 0 && r.top > H * 0.4) dy = Math.round(Math.min((H - r.top) / 2, H * 0.2));
+      if (!root.classList.contains('land')) { if (r.height > 0 && r.top > H * 0.4) dy = Math.round(Math.min((H - r.top) / 2, H * 0.2)); }
+      else if (r.height > H * 0.6 && r.left < W * 0.1) dx = -Math.round(Math.min(r.right / 2, W * 0.25));   // landscape: the card is a left column, so the sky moves right
     }
-    const key = `${W}x${H}:${dy}`; if (key === offKey && !force) return; offKey = key;
-    if (dy) cam.setViewOffset(W, H, 0, dy, W, H); else cam.clearViewOffset();
+    const key = `${W}x${H}:${dy}:${dx}`; if (key === offKey && !force) return; offKey = key;
+    if (dx || dy) cam.setViewOffset(W, H, dx, dy, W, H); else cam.clearViewOffset();
   }
   window.addEventListener('resize', () => requestAnimationFrame(() => applyViewOffset(true)));
 
   // player state
-  const P = { active: false, starting: false, def: null, ch: null, X: null, step: 0, token: 0, tryDone: false, tryShown: false, finished: false, watching: false, chk: null, poll: 0, okSince: 0, hintTimer: 0, wrongKey: '', opts: null, picked: new Set(), caption: '', textMode: '' };
+  const P = { active: false, starting: false, def: null, ch: null, X: null, step: 0, token: 0, tryDone: false, tryShown: false, finished: false, watching: false, chk: null, poll: 0, okSince: 0, hintTimer: 0, wrongKey: '', opts: null, picked: new Set(), caption: '', note: '', textMode: '', nextReady: false, readyTimer: 0, pace: 'idle', runId: 0 };
 
-  function setText(t, mode = '') { P.caption = t; P.textMode = mode; if (el.text.textContent !== t) el.text.textContent = t; el.text.classList.toggle('cap', mode === 'cap'); el.text.classList.toggle('wrong', mode === 'wrong'); }
-  function setNote(t, cls = '') { el.note.textContent = t || ''; el.note.className = 'lc-note' + (cls ? ' ' + cls : ''); el.note.hidden = !t; }
+  // One view toggle. Reduced (default): the short text (Watch: the lit line with one line above and below). Expanded: all the text, with the [+ ... +] details underlined (markup: content/README.md).
+  // Texts keep their markers everywhere; only rich() shows them.
+  let expanded = false, textKey = '';
+  try { const v = localStorage.getItem(VIEW_KEY); expanded = v ? v === 'expanded' : localStorage.getItem(DET_KEY) === '1'; } catch (e) { /* storage unavailable */ }
+  card.classList.toggle('lc-exp', expanded);
+  const rich = (s) => (expanded ? detailHtml(s, esc) : esc(brief(s)));
+  const visible = (s) => (expanded ? plain(s) : brief(s));
+  K.readText = visible;   // captions are held as long as the text the learner sees takes to read
+  function paintText() { const k = (expanded ? '1' : '0') + P.caption; if (k !== textKey) { textKey = k; el.text.innerHTML = rich(P.caption); } }
+  function paintNote() { el.note.innerHTML = P.note ? rich(P.note) : ''; }
+  function setText(t, mode = '') { P.caption = t; P.textMode = mode; paintText(); el.text.classList.toggle('cap', mode === 'cap'); el.text.classList.toggle('wrong', mode === 'wrong'); syncRead(); }
+  function setNote(t, cls = '') { P.note = t || ''; paintNote(); el.note.className = 'lc-note' + (cls ? ' ' + cls : ''); el.note.hidden = !t; syncRead(); }
+  /** The text window: hidden when there is nothing to read; the view toggle always on the Watch, else only when a shown text has details; the bar only when it holds the toggle. */
+  function syncRead() {
+    const lyOn = !el.lyrics.hidden, hasText = !!P.caption || lyOn || !!P.note;
+    const show = hasText && (lyOn || hasDetail(P.caption) || hasDetail(P.note));
+    const label = ui(expanded ? 'lessDetail' : 'moreDetail');
+    el.view.hidden = !show; el.view.innerHTML = `<span>${esc(label)}</span>${expanded ? ICON.down : ICON.up}`;
+    el.view.setAttribute('aria-pressed', String(expanded)); el.view.setAttribute('aria-expanded', String(expanded));
+    el.readbar.hidden = !show;
+    if (el.read.classList.contains('lc-read-empty') === hasText) { el.read.classList.toggle('lc-read-empty', !hasText); requestAnimationFrame(() => applyViewOffset()); }
+  }
+  function toggleView() {
+    expanded = !expanded; try { localStorage.setItem(VIEW_KEY, expanded ? 'expanded' : 'reduced'); } catch (e) { /* ignore */ }
+    card.classList.toggle('lc-exp', expanded);
+    paintText(); paintNote(); renderLyrics(); syncRead();
+    if (!expanded) el.body.scrollTop = 0;
+    scrollToCur(true); requestAnimationFrame(() => applyViewOffset());
+  }
   const keysOf = () => (P.chk && P.chk.keys ? P.chk.keys(P.X) : null) || { prompt: 'try.prompt', hint: 'try.hint', success: 'try.success' };
 
   function renderCard() {
@@ -177,22 +220,122 @@ async function boot(a, engine) {
     const done = stepsOf(P.def.id);
     el.prog.innerHTML = STEP_KEYS.map((k, i) => `<li class="${i === P.step ? 'cur' : done.includes(i) ? 'done' : ''}" ${i === P.step ? `aria-current="step" aria-label="${esc(ui('stepOf', { n: i + 1, title: ui(STEP_UI[i]) }))}"` : ''}><i></i><span>${esc(ui(STEP_UI[i]))}</span></li>`).join('');
     el.exit.innerHTML = `${ICON.x}<span>${esc(ui('exit'))}</span>`; el.exit.setAttribute('aria-label', ui('exitLabel')); el.exit.title = ui('exitLabel');
+    card.classList.remove('s-watch', 's-try', 's-old', 's-tonight'); card.classList.add(['s-watch', 's-try', 's-old', 's-tonight'][P.step]);
+    syncLyricsView();
     renderControls();
+    requestAnimationFrame(() => applyViewOffset());
+  }
+  // ---------------------------------------------------------------- the lyrics window (Watch): every caption of the step, the current one lit
+  let lyr = null, pendingSay = null, userScrollUntil = 0;
+  K.onSay = (key, text) => { pendingSay = { key, text }; };
+  const lyState = (i) => (lyr.done ? 'done' : lyr.cur < 0 || i > lyr.cur ? 'next' : i < lyr.cur ? 'past' : 'cur');
+  function buildPlaylist(cur) {
+    const md = mdLesson(P.def.id), x = X(), lines = [];
+    if (md) {
+      lines.push({ key: null, kind: 'hook', text: clean(md.hook || '') });
+      // Left out of the preview (they appear when said): lines only said in some places (LYR_MAYBE), the branch this place will not take (lesson.watchSkip(X)), and lines whose live values are not known yet.
+      let skip = [];
+      try { skip = (P.def.watchSkip && P.def.watchSkip(x)) || []; } catch (e) { console.error(e); }
+      for (const k of Object.keys((md.steps && md.steps.watch) || {})) {
+        const key = 'watch.' + k; if (LYR_MAYBE.includes(key) || skip.includes(key)) continue;
+        const text = x.preview(key); if (text) lines.push({ key, text });
+      }
+    }
+    lyr = { lines, cur: Math.min(cur, lines.length - 1), done: false }; el.lyrics.classList.remove('fin');
+    pendingSay = null; renderLyrics(); syncLyricsView();
+  }
+  /** Reduced view: the three lines shown, as [first, last] indexes: the lit line with one above and one below (idle: the first three; done: the last three). */
+  function lyWindow() {
+    const rows = lyr.lines.map((l, i) => i).filter((i) => !!brief(lyr.lines[i].text));   // a row that is all detail has no short text: not shown when reduced
+    let c = lyr.done ? rows.length - 1 : lyr.cur < 0 ? 0 : rows.findIndex((i) => i >= lyr.cur);
+    if (c < 0) c = rows.length - 1;
+    const lo = Math.max(0, Math.min(c - 1, rows.length - 3));
+    return new Set(rows.slice(lo, lo + 3));
+  }
+  const lyOut = (i, w) => !expanded && !w.has(i);
+  function renderLyrics() {
+    if (!lyr) { el.lyrics.innerHTML = ''; return; }
+    const w = lyWindow();
+    el.lyrics.innerHTML = lyr.lines.map((l, i) => `<li class="ly ${lyState(i)}${l.kind === 'hook' ? ' ly-hook' : ''}${lyOut(i, w) ? ' ly-out' : ''}">${rich(l.text)}</li>`).join('');
+  }
+  function paintLyrics() {
+    if (!lyr) return;
+    const w = lyWindow();
+    lyr.lines.forEach((l, i) => {
+      const li = el.lyrics.children[i]; if (!li) return;
+      const was = li.classList.contains('ly-out'), out = lyOut(i, w);
+      li.classList.remove('past', 'cur', 'next', 'done'); li.classList.add(lyState(i)); li.classList.toggle('ly-out', out);
+      if (was && !out && !reduced) { li.classList.add('ly-enter'); li.addEventListener('animationend', () => li.classList.remove('ly-enter'), { once: true }); }
+    });
+  }
+  /** Show or hide the list, the collapse button and the size classes for the current step. */
+  function syncLyricsView() {
+    const on = P.step !== 1 && !!lyr && lyr.lines.length > 0;   // Watch, The old way and Tonight read as rows
+    el.lyrics.hidden = !on; el.text.classList.toggle('sr-only', on);
+    if (!on && el.lyrics.firstChild) el.lyrics.innerHTML = '';
+    card.classList.toggle('has-lyr', on);
+    syncRead();
+  }
+  function scrollToCur(force) {
+    if (!lyr || el.lyrics.hidden || lyr.cur < 0 || !expanded) return;
+    if (!force && Date.now() < userScrollUntil) return;
+    const li = el.lyrics.children[lyr.cur]; if (!li) return;
+    el.body.scrollTo({ top: Math.max(0, li.offsetTop - el.body.clientHeight * 0.28), behavior: reduced ? 'auto' : 'smooth' });
+  }
+  const userTouch = () => { userScrollUntil = Date.now() + 5000; };
+  for (const ev of ['wheel', 'touchstart', 'pointerdown']) el.body.addEventListener(ev, userTouch, { passive: true });
+  /** A caption was said: find its line (by key, else by text), drop the branch lines that were skipped, or insert a line nobody predicted. */
+  function lyricAdvance(t) {
+    const ps = pendingSay, lt = K.lastT; pendingSay = null;
+    if (!lyr || !t) return;
+    const L = lyr.lines; if (L[lyr.cur] && L[lyr.cur].text === t) return;
+    const key = ps && ps.text === t ? ps.key : lt && lt.text === t ? lt.key : null;
+    let j = -1;
+    if (key) for (let i = lyr.cur + 1; i < L.length; i++) if (L[i].key === key) { j = i; break; }
+    if (j < 0) for (let i = lyr.cur + 1; i < L.length; i++) {
+      if (L[i].text === t) { j = i; break; }
+      if (L[i].key) { let f = null; try { f = X().T(L[i].key); } catch (e) { f = null; } if (f === t) { j = i; break; } }
+    }
+    let rebuild = false;
+    if (j >= 0) {
+      if (j > lyr.cur + 1) { L.splice(lyr.cur + 1, j - lyr.cur - 1); rebuild = true; j = lyr.cur + 1; }
+      if (L[j].text !== t) { L[j].text = t; rebuild = true; }
+      lyr.cur = j;
+    } else { L.splice(lyr.cur + 1, 0, { key: null, text: t }); lyr.cur++; rebuild = true; }
+    if (rebuild) renderLyrics(); else paintLyrics();
+    syncLyricsView(); scrollToCur();
+  }
+  function lyricFinish() {
+    if (!lyr) return;
+    lyr.lines.length = Math.min(lyr.lines.length, lyr.cur + 1); lyr.done = true;
+    renderLyrics(); syncLyricsView(); el.lyrics.classList.add('fin');   // no scroll spacer once finished: the text settles at the bottom like a transcript
   }
   function btn(act, label, cls = '', extra = '') { return `<button type="button" class="lc-btn ${cls}" data-a="${act}" ${extra}>${label}</button>`; }
   function renderControls() {
     const focus = document.activeElement && card.contains(document.activeElement) ? document.activeElement.dataset.a : null;
     const backB = btn('back', ICON.back, 'icon', `aria-label="${esc(ui('back'))}" title="${esc(ui('back'))}" ${P.step === 0 ? 'disabled' : ''}`);
-    const nextB = btn('next', `<span>${esc(ui('next'))}</span>${ICON.next}`, 'primary');
-    let h = backB;
-    if (P.step === 0) h += btn('replay', esc(reduced && !P.watchedOnce ? ui('watchPlay') : ui('replay')), 'alt') + nextB;
-    else if (P.step === 1) {
-      if (P.tryDone) h += nextB;
-      else h += btn('show', esc(ui('showMe')), 'alt') + btn('skip', esc(ui('skip')), 'ghost');
-    } else if (P.step === 2) h += nextB;
-    else if (!P.finished) h += btn('finish', `<span>${esc(ui('finish'))}</span>${ICON.tick}`, 'primary');
-    else { const nx = nextLessonAfter(P.def.id); h += nx ? btn('nextlesson', `<span>${esc(ui('nextLesson'))}</span>${ICON.next}`, 'primary') : btn('exit', `<span>${esc(ui('backToLearn'))}</span>`, 'primary'); }
-    el.ctl.innerHTML = h;
+    // Layout: Back on the left; everything else on the right, Next last. Only the button to press now is gold (and pulses): one at a time.
+    const gold = (on) => (on ? 'primary ready' : 'alt');
+    const nextB = (on) => btn('next', `<span>${esc(ui('next'))}</span>${ICON.next}`, gold(on));
+    const right = [];
+    if (P.step === 0) {
+      // Ready -> Pause / Go toggle -> Replay once the Watch has ended; the learner sets the pace
+      const ps = P.pace, pc = ps === 'idle' ? ['primary ready pace', ICON.play, 'ready'] : ps === 'play' ? ['alt pace', ICON.pause, 'pause'] : ps === 'pause' ? ['primary pace', ICON.play, 'go'] : ['alt pace', '', 'replay'];
+      right.push(['pace', `${pc[1]}<span>${esc(ui(pc[2]))}</span>`, pc[0], ps === 'play' || ps === 'pause' ? `aria-pressed="${ps === 'pause'}"` : '']);
+      right.push(nextB(ps === 'done'));
+    } else if (P.step === 1) {
+      if (!P.tryDone) right.push(['show', esc(ui('showMe')), 'alt']);
+      right.push(nextB(P.tryDone));                       // before the Try is solved, Next skips it
+    } else if (P.step === 2 || (P.step === 3 && !P.finished)) {
+      const ps = P.pace, pc = ps === 'play' ? ['alt pace', ICON.pause, 'pause'] : ps === 'pause' ? ['primary pace', ICON.play, 'go'] : ['alt pace', '', 'replay'];
+      right.push(['pace', `${pc[1]}<span>${esc(ui(pc[2]))}</span>`, pc[0], ps === 'play' || ps === 'pause' ? `aria-pressed="${ps === 'pause'}"` : '']);
+      right.push(P.step === 2 ? nextB(P.nextReady) : ['finish', `<span>${esc(ui('finish'))}</span>${ICON.tick}`, gold(P.nextReady)]);
+    }
+    else { const nx = nextLessonAfter(P.def.id); right.push(nx ? ['nextlesson', `<span>${esc(ui('nextLesson'))}</span>${ICON.next}`, gold(true)] : ['exit', `<span>${esc(ui('backToLearn'))}</span>`, gold(true)]); }
+    el.ctl.innerHTML = backB + right.map((b, i) => {
+      if (typeof b === 'string') return i === 0 ? b.replace('class="lc-btn ', 'class="lc-btn push ') : b;
+      return btn(b[0], b[1], (i === 0 ? 'push ' : '') + b[2], b[3] || '');
+    }).join('');
     if (focus) { const t = el.ctl.querySelector(`[data-a=${focus}]`) || el.ctl.querySelector('.primary'); if (t) t.focus({ preventScroll: true }); }
   }
   const nextLessonAfter = (id) => { const l = lessonList(), i = l.findIndex((x) => x.def.id === id); return i >= 0 && i + 1 < l.length ? l[i + 1] : null; };
@@ -212,14 +355,14 @@ async function boot(a, engine) {
   function showAnswerLabels() { body.classList.remove('learn-nopolestar'); for (const it of hiddenLbls) it.hidden = false; hiddenLbls = []; }
   function endStep() {
     showAnswerLabels(); card.classList.remove('choice'); clearTimeout(P.wrongTimer);
-    clearInterval(P.poll); clearTimeout(P.hintTimer); P.poll = 0; P.okSince = 0;
+    clearInterval(P.poll); clearTimeout(P.hintTimer); clearTimeout(P.readyTimer); clearTimeout(P.readTimer); P.poll = 0; P.okSince = 0;
     engine.stop(); ov.clear(); body.classList.remove('learn-nopolelbl'); (K.cleanups || []).splice(0).forEach((f) => { try { f(); } catch (e) { console.error(e); } }); P.watching = false; P.chk = null; P.opts = null; P.picked = new Set(); P.wrongKey = '';
     el.opts.innerHTML = ''; el.opts.hidden = true; el.tool.hidden = true; el.tool.innerHTML = '';
     setNote('');
   }
   function setStep(i) {
     endStep();
-    P.step = i; const tok = ++P.token; P.tryDone = false; P.tryShown = false; P.ready = false;
+    P.step = i; const tok = ++P.token; P.tryDone = false; P.tryShown = false; P.ready = false; P.nextReady = false; P.pace = 'idle'; P.runId++; lyr = null; pendingSay = null;
     setText(''); renderCard();
     [runWatch, runTry, runOld, runTonight][i](tok);
   }
@@ -230,19 +373,39 @@ async function boot(a, engine) {
     if (S.mode !== 'sky') { await D.prep(); await D.toSky(S.sky.az, S.sky.alt, S.sky.fov); }
   }
 
-  async function runWatch(tok) {
+  /** The Watch waits for the learner: the whole lyrics list to read with nothing lit, and the Ready button. Ready starts it, Pause / Go set the pace. */
+  function runWatch() {
     const md = mdLesson(P.def.id);
+    P.pace = 'idle'; P.watching = false; P.nextReady = false;
     setText(md ? md.hook : '', '');
-    if (reduced && !P.watchedOnce) { renderControls(); return; }
-    await playWatch(tok);
+    buildPlaylist(-1); renderControls();
+    // while the learner reads and gets ready, show their own sky (not the globe or the last lesson's view); Ready cancels this and plays the Watch
+    engine.runScript(async () => { await homeAndClock(); }, { onCaption: () => {} });
   }
   async function playWatch(tok) {
-    P.watching = true; P.watchedOnce = true; ov.clear(); renderControls();
-    const ok = await engine.runScript(async () => { await homeAndClock(); await P.def.watch(X()); }, { onCaption: (t) => { if (tok === P.token) setText(t, 'cap'); } });
-    if (tok !== P.token) return;
+    const rid = ++P.runId;
+    P.watching = true; P.watchedOnce = true; P.nextReady = false; P.pace = 'play'; ov.clear();
+    buildPlaylist(0); renderControls(); scrollToCur(true);
+    const hook = lyr && lyr.lines[0] && lyr.lines[0].kind === 'hook' ? lyr.lines[0].text : '';
+    const ok = await engine.runScript(async (d) => {
+      const t0 = d.now(); await homeAndClock();
+      if (hook) { const left = readMs(visible(hook)) - (d.now() - t0); if (left > 0) await d.wait(left); }   // the lit intro line gets its reading time while the sky gets into place
+      await P.def.watch(X());
+    }, { onCaption: (t) => { if (tok === P.token && rid === P.runId) { setText(t, 'cap'); lyricAdvance(t); } } });
+    if (tok !== P.token || rid !== P.runId) return;
     P.watching = false;
-    if (ok) markStep(P.def.id, 0);
+    if (ok) { markStep(P.def.id, 0); lyricFinish(); P.nextReady = true; P.pace = 'done'; } else P.pace = 'idle';
     renderCard();
+  }
+  /** The pace button: Ready / Replay start the Watch, Pause holds it, Go lets it carry on. */
+  function pace() {
+    if (!P.active || !P.def) return;
+    if (P.step === 2 || P.step === 3) { readPace(); return; }
+    if (P.step !== 0) return;
+    const tok = P.token;
+    if (P.pace === 'idle' || P.pace === 'done') { engine.stop(); ov.clear(); P.nextReady = false; playWatch(tok); }
+    else if (P.pace === 'play') { if (!engine.running) return; engine.pause(); P.pace = 'pause'; renderControls(); }
+    else if (P.pace === 'pause') { engine.resume(); P.pace = 'play'; renderControls(); }
   }
 
   async function runTry(tok) {
@@ -293,7 +456,7 @@ async function boot(a, engine) {
     if (tok !== P.token || P.tryDone) return;
     clearInterval(P.poll); clearTimeout(P.hintTimer);
     P.tryDone = true; P.tryShown = !!shown; showAnswerLabels();
-    markStep(P.def.id, 1); renderTool();
+    markStep(P.def.id, 1); renderTool(); P.nextReady = true;
     setText(X().T(keysOf().success), 'ok'); setNote(shown ? ui('shownLine') : '', shown ? 'hint' : '');
     el.opts.querySelectorAll('.lc-opt').forEach((b) => { b.disabled = true; });
     renderControls();
@@ -362,13 +525,47 @@ async function boot(a, engine) {
 
   function runOld(tok) {
     setText(X().T('oldway.text'), '');
-    markStep(P.def.id, 2); renderCard();
+    markStep(P.def.id, 2); renderCard(); startReading(tok);
     if (P.def.oldWay) engine.runScript(async () => { await homeAndClock(); await P.def.oldWay(X()); }, { onCaption: () => {} });
   }
   function runTonight(tok) {
     const x = X(), P0 = K.homeCtx(), key = P.def.tonightKey ? P.def.tonightKey(P0) : 'text';
-    setText(x.T('tonight.' + key), ''); markStep(P.def.id, 3); renderCard();
+    setText(x.T('tonight.' + key), ''); markStep(P.def.id, 3); renderCard(); startReading(tok);
   }
+  // ---------------------------------------------------------------- The old way and Tonight: the text as rows, lit one after the other at reading pace (like the Watch)
+  /** Sentences of a text, keeping every [+ ... +] detail whole (a row may then hold a detail and a sentence). */
+  function splitRows(t) {
+    const out = []; let acc = '';
+    for (const p of String(t).split(/(?<=[.!?]["\u201d\u2019']?(?:\+\])?)\s+(?=["\u201c(\[A-Z0-9])|(?<=[.!?]["\u201d\u2019']?)(?=\[\+\s)/)) {
+      acc = acc ? `${acc} ${p}` : p;
+      if ((acc.match(/\[\+/g) || []).length === (acc.match(/\+\]/g) || []).length) { out.push(acc); acc = ''; }
+    }
+    if (acc) out.push(acc);
+    return out;
+  }
+  function startReading(tok) {
+    clearTimeout(P.readTimer);
+    lyr = { lines: splitRows(P.caption).map((r) => ({ key: null, text: r })), cur: -1, done: false }; el.lyrics.classList.remove('fin');
+    renderLyrics(); syncLyricsView(); P.nextReady = false; P.pace = 'play'; renderControls();
+    readRow(tok, 0);
+  }
+  /** Light row i (skipping rows with no text in this view) and hold it for its reading time; after the last one, the step is read: Next turns gold. */
+  function readRow(tok, i) {
+    if (tok !== P.token || !lyr) return;
+    while (i < lyr.lines.length && !visible(lyr.lines[i].text)) i++;
+    if (i >= lyr.lines.length) { lyr.done = true; renderLyrics(); syncLyricsView(); el.lyrics.classList.add('fin'); P.pace = 'done'; P.nextReady = true; renderControls(); return; }
+    lyr.cur = i; paintLyrics(); syncLyricsView(); scrollToCur();
+    P.readI = i; P.readLeft = readMs(visible(lyr.lines[i].text)); P.readAt = performance.now();
+    P.readTimer = setTimeout(() => readRow(tok, i + 1), P.readLeft);
+  }
+  function readPace() {
+    const tok = P.token;
+    if (P.pace === 'play') { clearTimeout(P.readTimer); P.readLeft -= performance.now() - P.readAt; P.pace = 'pause'; }
+    else if (P.pace === 'pause') { P.readAt = performance.now(); P.readTimer = setTimeout(() => readRow(tok, P.readI + 1), Math.max(0, P.readLeft)); P.pace = 'play'; }
+    else { startReading(tok); return; }
+    renderControls();
+  }
+
 
   // ---------------------------------------------------------------- lesson start / finish / exit
   async function startLesson(id, step = 0) {
@@ -389,7 +586,7 @@ async function boot(a, engine) {
       requestAnimationFrame(() => { applyViewOffset(true); try { card.focus({ preventScroll: true }); } catch (e) { /* ignore */ } });
     } finally { P.starting = false; }
   }
-  function finishLesson() { markDone(P.def.id); P.finished = true; renderCard(); setText(`${ui('lessonDone')}.`, 'ok'); }
+  function finishLesson() { markDone(P.def.id); P.finished = true; P.nextReady = true; renderCard(); setText(`${ui('lessonDone')}.`, 'ok'); }
   async function exitPlayer(toHome = true) {
     if (!P.active) return;
     const ch = P.ch; P.token++; endStep();
@@ -406,13 +603,14 @@ async function boot(a, engine) {
     if (act === 'exit') exitPlayer(true);
     else if (act === 'back') { if (P.step > 0) setStep(P.step - 1); }
     else if (act === 'next') goNext();
-    else if (act === 'replay') { const tok = P.token; engine.stop(); ov.clear(); playWatch(tok); }
+    else if (act === 'pace' || act === 'replay') pace();
+    else if (act === 'view') toggleView();
     else if (act === 'show') showMe();
     else if (act === 'skip') { markStep(P.def.id, 1); setStep(2); }
     else if (act === 'finish') finishLesson();
     else if (act === 'nextlesson') { const nx = nextLessonAfter(P.def.id); if (nx) { P.finished = false; P.def = nx.def; P.ch = nx.ch; P.X = K.makeX(nx.def); prog.last = nx.def.id; P.finished = isDone(nx.def.id); P.watchedOnce = false; setStep(0); } }
   });
-  function goNext() { if (P.step < 3) setStep(P.step + 1); else if (!P.finished) finishLesson(); else card.querySelector('[data-a=nextlesson]') && card.querySelector('[data-a=nextlesson]').click(); }
+  function goNext() { if (P.step === 1 && !P.tryDone) markStep(P.def.id, 1); if (P.step < 3) setStep(P.step + 1); else if (!P.finished) finishLesson(); else card.querySelector('[data-a=nextlesson]') && card.querySelector('[data-a=nextlesson]').click(); }
 
   // ---------------------------------------------------------------- keys
   window.addEventListener('keydown', (e) => {
@@ -424,6 +622,7 @@ async function boot(a, engine) {
       return;
     }
     if ((!P.active && home.hidden) || typing) return;
+    if (e.key === ' ' && P.active && P.step !== 1 && !(P.step === 3 && P.finished)) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) pace(); return; }   // Space is the pace button on the Watch
     // Explore's own shortcuts (G globe, S sky, Space play/pause) must not change the sky behind the home sheet or leave a lesson's sky
     if (['g', 'G', 's', 'S'].includes(e.key) || (e.key === ' ' && !(e.target.matches && e.target.matches('button')))) { e.stopPropagation(); if (e.key === ' ') e.preventDefault(); return; }
     if (!P.active) return;
@@ -431,12 +630,17 @@ async function boot(a, engine) {
     else if (e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); if (P.step > 0) setStep(P.step - 1); }
   }, true);
 
+  window.addEventListener('keyup', (e) => {   // a focused button would click on Space's keyup: the keydown already did the work
+    if (e.key === ' ' && P.active && P.step === 0 && !(e.target.matches && e.target.matches('input, textarea, select'))) e.preventDefault();
+  }, true);
+
   // the toolbar and dock Learn buttons
   const learnBtn = $('#lesson-btn'), dockBtn = $('#dk-explain');
   learnBtn && learnBtn.addEventListener('click', (e) => { e.stopPropagation(); if (!home.hidden) closeHome(); else openHome(); });
   window.__learn = {
     open: () => openHome(), close: () => leaveAll(), start: startLesson, exit: () => exitPlayer(true), step: (i) => setStep(i),
-    get state() { return { active: P.active, step: P.step, lesson: P.def && P.def.id, tryDone: P.tryDone, finished: P.finished, watching: P.watching, prog }; },
+    play: () => { if (P.active && P.step === 0 && (P.pace === 'idle' || P.pace === 'done')) pace(); return Promise.resolve(); },
+    get state() { return { active: P.active, step: P.step, lesson: P.def && P.def.id, tryDone: P.tryDone, finished: P.finished, watching: P.watching, pace: P.pace, prog }; },
     P, kit: K, ov, course: () => course, progress: () => prog, resetProgress() { prog = { v: 1, done: {}, steps: {}, last: null }; saveProg(); },
   };
   window.__learnReady = true;
